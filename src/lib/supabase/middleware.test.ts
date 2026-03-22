@@ -12,7 +12,11 @@ describe("isProtectedPath", () => {
     "/pages",
     "/pages/123",
     "/internal",
-    "/internal/ops"
+    "/internal/ops",
+    "/admin",
+    "/admin/organizations",
+    "/admin/billing",
+    "/admin/settings"
   ])("returns true for %s", (path) => {
     expect(isProtectedPath(path)).toBe(true);
   });

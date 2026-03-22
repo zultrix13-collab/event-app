@@ -48,6 +48,8 @@ export async function operatorReverifyInvoiceAction(
 
     revalidatePath("/internal/ops");
     revalidatePath("/internal/ops/billing");
+    revalidatePath("/admin");
+    revalidatePath("/admin/billing");
     return { message: `Verification finished: ${result.status}` };
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Reverification failed.";
@@ -105,6 +107,8 @@ export async function operatorRetrySyncJobAction(
 
     revalidatePath("/internal/ops");
     revalidatePath("/internal/ops/jobs");
+    revalidatePath("/admin");
+    revalidatePath("/admin/jobs");
     revalidatePath("/dashboard");
     return { message: "Sync job executed." };
   } catch (e) {
@@ -163,6 +167,8 @@ export async function operatorRetryAnalysisJobAction(
 
     revalidatePath("/internal/ops");
     revalidatePath("/internal/ops/jobs");
+    revalidatePath("/admin");
+    revalidatePath("/admin/jobs");
     revalidatePath("/dashboard");
     if (!result.ok) {
       return { error: result.error ?? "Analysis still failed." };

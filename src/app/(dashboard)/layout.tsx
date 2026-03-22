@@ -32,8 +32,8 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
           <Link href="/billing">Billing</Link>
           <Link href="/pricing">Pricing</Link>
           {user?.email && isInternalOpsEmail(user.email) ? (
-            <Link href="/internal/ops" style={{ color: "#7c3aed" }}>
-              Internal ops
+            <Link href="/admin" style={{ color: "#7c3aed" }}>
+              System admin
             </Link>
           ) : null}
         </nav>

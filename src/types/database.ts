@@ -989,6 +989,39 @@ export type Database = {
           }
         ];
       };
+      system_admins: {
+        Row: {
+          id: string;
+          user_id: string;
+          email: string;
+          role: "super_admin" | "operator" | "viewer";
+          status: "active" | "suspended";
+          granted_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          email: string;
+          role: "super_admin" | "operator" | "viewer";
+          status?: "active" | "suspended";
+          granted_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          email?: string;
+          role?: "super_admin" | "operator" | "viewer";
+          status?: "active" | "suspended";
+          granted_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       operator_audit_events: {
         Row: {
           id: string;
