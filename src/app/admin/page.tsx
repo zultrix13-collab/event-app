@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 /** Deep links for ops tools until routes are migrated under `/admin` (Phase C+). */
 const OPS = {
-  organizations: "/internal/ops/organizations",
+  organizations: "/admin/organizations",
   billing: "/internal/ops/billing",
   jobs: "/internal/ops/jobs"
 } as const;

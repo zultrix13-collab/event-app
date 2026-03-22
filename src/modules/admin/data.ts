@@ -24,6 +24,18 @@ export type OrganizationOpsRow = {
   }[];
 };
 
+/** Enriched row for `/admin/organizations` (computed in `getOrganizationsForAdminList`). */
+export type OrganizationAdminListRow = OrganizationOpsRow & {
+  ownerEmail: string | null;
+  /** Primary subscription status (orgs have one subscription row). */
+  subscriptionStatus: string | null;
+  planLabel: string | null;
+  selectedPagesCount: number;
+  metaConnectionSummary: string;
+  hasFailedSync24h: boolean;
+  hasFailedAnalysis24h: boolean;
+};
+
 export type SyncJobOpsRow = {
   id: string;
   organization_id: string;
@@ -98,6 +110,329 @@ export async function getOrganizationsForOps(limit = 80): Promise<OrganizationOp
     subscriptions: asArray(row.subscriptions),
     meta_connections: asArray(row.meta_connections)
   }));
+}
+
+async function getOrgIdsWithFailedJobsSince(params: {
+  sinceIso: string;
+  table: "meta_sync_jobs" | "analysis_jobs";
+}): Promise<Set<string>> {
+  const admin = getSupabaseAdminClient();
+  const { data, error } = await admin
+    .from(params.table)
+    .select("organization_id")
+    .eq("status", "failed")
+    .gte("created_at", params.sinceIso);
+
+  if (error) {
+    throw error;
+  }
+
+  return new Set((data ?? []).map((r) => r.organization_id as string));
+}
+
+/**
+ * Organizations list for system admin: owner email, page counts, 24h job failure flags.
+ * Reuses the same nested shape as `getOrganizationsForOps` plus members, pages.
+ */
+export async function getOrganizationsForAdminList(limit = 500): Promise<OrganizationAdminListRow[]> {
+  const admin = getSupabaseAdminClient();
+  const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  const [raw, failedSyncOrgs, failedAnalysisOrgs] = await Promise.all([
+    admin
+      .from("organizations")
+      .select(
+        `
+        id, name, slug, status, created_at,
+        subscriptions ( status, plan_id, plans (code, name) ),
+        meta_connections ( status, last_error, last_validated_at ),
+        organization_members ( role, status, profiles ( email ) ),
+        meta_pages ( is_selected, status )
+      `
+      )
+      .order("created_at", { ascending: false })
+      .limit(limit),
+    getOrgIdsWithFailedJobsSince({ sinceIso: dayAgo, table: "meta_sync_jobs" }),
+    getOrgIdsWithFailedJobsSince({ sinceIso: dayAgo, table: "analysis_jobs" })
+  ]);
+
+  if (raw.error) {
+    throw raw.error;
+  }
+
+  const rows = (raw.data ?? []) as unknown as (Omit<OrganizationOpsRow, "subscriptions" | "meta_connections"> & {
+    subscriptions: OrganizationOpsRow["subscriptions"] | OrganizationOpsRow["subscriptions"][0] | null;
+    meta_connections: OrganizationOpsRow["meta_connections"][0] | OrganizationOpsRow["meta_connections"] | null;
+    organization_members:
+      | { role: string; status: string; profiles: { email: string } | null }[]
+      | { role: string; status: string; profiles: { email: string } | null }
+      | null;
+    meta_pages: { is_selected: boolean; status: string }[] | { is_selected: boolean; status: string } | null;
+  })[];
+
+  return rows.map((row) => {
+    const subscriptions = asArray(row.subscriptions);
+    const meta_connections = asArray(row.meta_connections);
+    const members = asArray(row.organization_members);
+    const pages = asArray(row.meta_pages);
+
+    const owner = members.find((m) => m.role === "owner" && m.status === "active");
+    const ownerEmail = owner?.profiles?.email?.trim() ?? null;
+
+    const sub = subscriptions[0];
+    const subscriptionStatus = sub?.status ?? null;
+    const planLabel = sub?.plans ? `${sub.plans.name} (${sub.plans.code})` : null;
+
+    const selectedPagesCount = pages.filter((p) => p.is_selected && p.status === "active").length;
+
+    const metas = meta_connections;
+    const metaConnectionSummary =
+      metas.length === 0
+        ? "No connection"
+        : metas.map((m) => m.status).join(", ") + (metas.some((m) => m.status !== "active") ? " ⚠" : "");
+
+    const base: OrganizationOpsRow = {
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      status: row.status,
+      created_at: row.created_at,
+      subscriptions,
+      meta_connections
+    };
+
+    return {
+      ...base,
+      ownerEmail,
+      subscriptionStatus,
+      planLabel,
+      selectedPagesCount,
+      metaConnectionSummary,
+      hasFailedSync24h: failedSyncOrgs.has(row.id),
+      hasFailedAnalysis24h: failedAnalysisOrgs.has(row.id)
+    };
+  });
+}
+
+export type OrganizationAdminDetail = {
+  organization: OrganizationOpsRow & {
+    updated_at: string;
+    organization_members: Array<{
+      role: string;
+      status: string;
+      profiles: { id: string; email: string; full_name: string | null } | null;
+    }>;
+    meta_pages: Array<{
+      id: string;
+      meta_page_id: string;
+      name: string;
+      is_selected: boolean;
+      status: string;
+      last_synced_at: string | null;
+      category: string | null;
+    }>;
+  };
+  subscriptionWithPlan:
+    | (OrganizationOpsRow["subscriptions"][0] & {
+        plans: { code: string; name: string; max_pages: number; syncs_per_day: number; monthly_ai_reports: number } | null;
+        current_period_start: string;
+        current_period_end: string | null;
+      })
+    | null;
+  metaConnections: OrganizationOpsRow["meta_connections"];
+  usageCounters: Array<{
+    id: string;
+    period_key: string;
+    metric_key: string;
+    value: number;
+    updated_at: string;
+  }>;
+  recentSyncJobs: SyncJobOpsRow[];
+  recentAnalysisJobs: AnalysisJobOpsRow[];
+  recentInvoices: InvoiceWithOrg[];
+  recentPaymentTransactions: PaymentTransactionRow[];
+  recentBillingEvents: BillingEventRow[];
+  recentAuditEvents: OperatorAuditEventRow[];
+};
+
+export async function getOrganizationAdminDetail(organizationId: string): Promise<OrganizationAdminDetail | null> {
+  const admin = getSupabaseAdminClient();
+
+  const { data: orgRow, error: orgErr } = await admin
+    .from("organizations")
+    .select(
+      `
+      id, name, slug, status, created_at, updated_at,
+      subscriptions (
+        status, plan_id, current_period_start, current_period_end, cancel_at_period_end, trial_ends_at,
+        plans ( code, name, max_pages, syncs_per_day, monthly_ai_reports, report_retention_days )
+      ),
+      meta_connections ( id, status, last_error, last_validated_at, meta_user_id, granted_scopes, token_expires_at, created_at ),
+      organization_members ( role, status, profiles ( id, email, full_name ) ),
+      meta_pages ( id, meta_page_id, name, is_selected, status, last_synced_at, category )
+    `
+    )
+    .eq("id", organizationId)
+    .maybeSingle();
+
+  if (orgErr || !orgRow) {
+    return null;
+  }
+
+  const o = orgRow as unknown as {
+    id: string;
+    name: string;
+    slug: string;
+    status: string;
+    created_at: string;
+    updated_at: string;
+    subscriptions: OrganizationOpsRow["subscriptions"] | OrganizationOpsRow["subscriptions"][0] | null;
+    meta_connections: OrganizationOpsRow["meta_connections"] | OrganizationOpsRow["meta_connections"][0] | null;
+    organization_members:
+      | { role: string; status: string; profiles: { id: string; email: string; full_name: string | null } | null }[]
+      | { role: string; status: string; profiles: { id: string; email: string; full_name: string | null } | null }
+      | null;
+    meta_pages:
+      | Array<{
+          id: string;
+          meta_page_id: string;
+          name: string;
+          is_selected: boolean;
+          status: string;
+          last_synced_at: string | null;
+          category: string | null;
+        }>
+      | {
+          id: string;
+          meta_page_id: string;
+          name: string;
+          is_selected: boolean;
+          status: string;
+          last_synced_at: string | null;
+          category: string | null;
+        }
+      | null;
+  };
+
+  const subscriptions = asArray(o.subscriptions);
+  const meta_connections = asArray(o.meta_connections);
+  const organization_members = asArray(o.organization_members);
+  const meta_pages = asArray(o.meta_pages);
+
+  const subFirst = subscriptions[0] as
+    | (OrganizationOpsRow["subscriptions"][0] & {
+        current_period_start?: string;
+        current_period_end?: string | null;
+        cancel_at_period_end?: boolean;
+        trial_ends_at?: string | null;
+        plans?: { code: string; name: string; max_pages: number; syncs_per_day: number; monthly_ai_reports: number; report_retention_days: number } | null;
+      })
+    | undefined;
+
+  const subscriptionWithPlan =
+    subFirst && subFirst.plans
+      ? {
+          status: subFirst.status,
+          plan_id: subFirst.plan_id,
+          plans: subFirst.plans,
+          current_period_start: subFirst.current_period_start ?? "",
+          current_period_end: subFirst.current_period_end ?? null
+        }
+      : subFirst
+        ? {
+            status: subFirst.status,
+            plan_id: subFirst.plan_id,
+            plans: subFirst.plans ?? null,
+            current_period_start: subFirst.current_period_start ?? "",
+            current_period_end: subFirst.current_period_end ?? null
+          }
+        : null;
+
+  const organization: OrganizationAdminDetail["organization"] = {
+    id: o.id,
+    name: o.name,
+    slug: o.slug,
+    status: o.status,
+    created_at: o.created_at,
+    updated_at: o.updated_at,
+    subscriptions,
+    meta_connections,
+    organization_members,
+    meta_pages
+  };
+
+  const [
+    usageRes,
+    syncRes,
+    analysisRes,
+    invRes,
+    payRes,
+    billRes,
+    auditRes
+  ] = await Promise.all([
+    admin.from("usage_counters").select("*").eq("organization_id", organizationId).order("updated_at", { ascending: false }).limit(48),
+    admin
+      .from("meta_sync_jobs")
+      .select(
+        `
+        id, organization_id, meta_page_id, job_type, status, attempt_count, error_message, created_at, finished_at,
+        organizations ( name, slug ),
+        meta_pages ( name )
+      `
+      )
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(15),
+    admin
+      .from("analysis_jobs")
+      .select(
+        `
+        id, organization_id, meta_page_id, status, attempt_count, error_message, created_at, finished_at, source_sync_job_id,
+        organizations ( name, slug ),
+        meta_pages ( name )
+      `
+      )
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(15),
+    admin.from("invoices").select("*").eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(15),
+    admin.from("payment_transactions").select("*").eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(12),
+    admin.from("billing_events").select("*").eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(25),
+    admin.from("operator_audit_events").select("*").eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(30)
+  ]);
+
+  if (
+    usageRes.error ||
+    syncRes.error ||
+    analysisRes.error ||
+    invRes.error ||
+    payRes.error ||
+    billRes.error ||
+    auditRes.error
+  ) {
+    throw (
+      usageRes.error ||
+      syncRes.error ||
+      analysisRes.error ||
+      invRes.error ||
+      payRes.error ||
+      billRes.error ||
+      auditRes.error
+    );
+  }
+
+  return {
+    organization,
+    subscriptionWithPlan,
+    metaConnections: meta_connections,
+    usageCounters: (usageRes.data ?? []) as OrganizationAdminDetail["usageCounters"],
+    recentSyncJobs: (syncRes.data ?? []) as SyncJobOpsRow[],
+    recentAnalysisJobs: (analysisRes.data ?? []) as AnalysisJobOpsRow[],
+    recentInvoices: (invRes.data ?? []) as InvoiceWithOrg[],
+    recentPaymentTransactions: (payRes.data ?? []) as PaymentTransactionRow[],
+    recentBillingEvents: (billRes.data ?? []) as BillingEventRow[],
+    recentAuditEvents: (auditRes.data ?? []) as OperatorAuditEventRow[]
+  };
 }
 
 export async function getRecentSyncJobsForOps(limit = 50): Promise<SyncJobOpsRow[]> {

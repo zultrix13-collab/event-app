@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Overview" },
-  { href: "/internal/ops/organizations", label: "Organizations" },
+  { href: "/admin/organizations", label: "Organizations" },
   { href: "/internal/ops/billing", label: "Billing" },
   { href: "/internal/ops/jobs", label: "Jobs" },
   { href: "/admin/audit", label: "Audit log" },

@@ -11,7 +11,11 @@ export default async function InternalOpsOrganizationsPage() {
       <div>
         <h1 style={{ margin: "0 0 0.35rem" }}>Organizations</h1>
         <p style={{ color: "#64748b", margin: 0, fontSize: "0.95rem" }}>
-          Subscription state, Meta connection health, and org metadata (service role).
+          Subscription state, Meta connection health, and org metadata (service role). Prefer the{" "}
+          <Link href="/admin/organizations" style={{ color: "#4f46e5" }}>
+            system admin org directory
+          </Link>{" "}
+          for search and detail views.
         </p>
       </div>
 
