@@ -1,0 +1,47 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
+
+export type AuthActionState = {
+  error?: string;
+  message?: string;
+};
+
+export async function loginWithOtpAction(
+  _prevState: AuthActionState,
+  formData: FormData
+): Promise<AuthActionState> {
+  const email = formData.get("email");
+  if (typeof email !== "string" || !email.trim()) {
+    return { error: "Email is required." };
+  }
+
+  const nextPath = formData.get("next");
+  const next =
+    typeof nextPath === "string" && nextPath.startsWith("/") && !nextPath.startsWith("//")
+      ? nextPath
+      : "/dashboard";
+
+  const supabase = await getSupabaseServerClient();
+  const origin = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email: email.trim().toLowerCase(),
+    options: {
+      emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`
+    }
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { message: "Check your email for the login link." };
+}
+
+export async function signOutAction() {
+  const supabase = await getSupabaseServerClient();
+  await supabase.auth.signOut();
+  redirect("/login");
+}
