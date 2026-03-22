@@ -26,6 +26,10 @@ Use Supabase CLI (`supabase db push` / linked project) or paste that file’s co
 
 Successful bootstrap writes `operator_audit_events` with `action_type = system_admin_bootstrap` (best-effort; failure does not block access).
 
+## Legacy URL
+
+`/internal/ops` (exact) redirects to `/admin` (overview). Deeper paths such as `/internal/ops/billing` are **not** redirected so existing tooling keeps working until routes move under `/admin`.
+
 ## Remaining risks (Phase A)
 
 | Risk | Mitigation / note |

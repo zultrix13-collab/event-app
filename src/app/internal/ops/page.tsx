@@ -24,6 +24,11 @@ export default async function InternalOpsOverviewPage() {
         }}
       >
         <Stat label="Organizations" value={counts.organizationCount} href="/internal/ops/organizations" />
+        <Stat
+          label="Active subscriptions"
+          value={counts.activeSubscriptionCount}
+          href="/internal/ops/organizations"
+        />
         <Stat label="Pending invoices" value={counts.pendingInvoiceCount} href="/internal/ops/billing" />
         <Stat
           label="Pending past due"

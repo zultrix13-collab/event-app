@@ -98,7 +98,7 @@ Compare against `.env.example` for descriptions.
 - [ ] Auth callback redirects to `/dashboard`
 - [ ] Organization creation works at `/setup-organization`
 - [ ] Meta connect flow completes at `/pages`
-- [ ] Internal ops accessible at `/internal/ops` (for listed emails)
+- [ ] System admin at `/admin` (DB `system_admins` + bootstrap) and legacy internal ops under `/internal/ops/*` work for operators
 - [ ] 404 page renders at `/nonexistent-page`
 - [ ] Privacy, Terms, Data Deletion pages load
 

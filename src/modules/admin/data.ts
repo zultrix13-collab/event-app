@@ -1,5 +1,6 @@
 /**
- * Internal ops reads (service role). Never expose to non-allowlisted users — pages must call `requireInternalOpsActor`.
+ * Admin / internal ops reads (service role).
+ * Use only behind `requireSystemAdmin` (DB-backed) or legacy `requireInternalOpsActor` (env allowlist).
  */
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { BillingEventRow, PaymentTransactionRow } from "@/modules/billing/data";
@@ -203,6 +204,8 @@ export async function getRecentOperatorAuditEvents(limit = 40): Promise<Operator
 
 export type OpsOverviewCounts = {
   organizationCount: number;
+  /** Subscriptions in a billing-active lifecycle (paid or trial). */
+  activeSubscriptionCount: number;
   pendingInvoiceCount: number;
   /** Pending invoices whose `due_at` is in the past (stale payment / abandoned checkout). */
   pendingPastDueCount: number;
@@ -218,8 +221,20 @@ export async function getOpsOverviewCounts(): Promise<OpsOverviewCounts> {
   const nowIso = new Date().toISOString();
   const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [orgs, pendingHead, pastDue, oldPending, failedSync24h, failedAnalysis24h] = await Promise.all([
+  const [
+    orgs,
+    activeSubs,
+    pendingHead,
+    pastDue,
+    oldPending,
+    failedSync24h,
+    failedAnalysis24h
+  ] = await Promise.all([
     admin.from("organizations").select("id", { count: "exact", head: true }),
+    admin
+      .from("subscriptions")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["active", "trialing"]),
     admin.from("invoices").select("*", { count: "exact", head: true }).eq("status", "pending"),
     admin.from("invoices").select("*", { count: "exact", head: true }).eq("status", "pending").lt("due_at", nowIso),
     admin.from("invoices").select("*", { count: "exact", head: true }).eq("status", "pending").lt("created_at", threeDaysAgo),
@@ -237,6 +252,7 @@ export async function getOpsOverviewCounts(): Promise<OpsOverviewCounts> {
 
   return {
     organizationCount: orgs.count ?? 0,
+    activeSubscriptionCount: activeSubs.count ?? 0,
     pendingInvoiceCount: pendingHead.count ?? 0,
     pendingPastDueCount: pastDue.count ?? 0,
     pendingOlderThan3dCount: oldPending.count ?? 0,

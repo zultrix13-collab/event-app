@@ -4,16 +4,8 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   async redirects() {
     return [
-      {
-        source: "/internal/ops",
-        destination: "/admin",
-        permanent: false
-      },
-      {
-        source: "/internal/ops/:path*",
-        destination: "/admin/:path*",
-        permanent: false
-      }
+      // Legacy overview URL only — sub-routes stay under /internal/ops/* until migrated (Phase C+).
+      { source: "/internal/ops", destination: "/admin", permanent: false }
     ];
   }
 };
