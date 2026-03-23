@@ -23,15 +23,14 @@ export function StartPaidCheckoutForm({ organizationId, planId, planLabel, disab
         <input type="hidden" name="organizationId" value={organizationId} />
         <input type="hidden" name="planId" value={planId} />
         <Button type="submit" variant="primary" disabled={pending || disabled}>
-          {pending ? "Creating invoice…" : `Pay with QPay — ${planLabel}`}
+          {pending ? "QPay нэхэмжлэл үүсгэж байна..." : `QPay-аар төлөх — ${planLabel}`}
         </Button>
       </form>
       {state.error ? <span className="ui-inline-feedback ui-inline-feedback--error">{state.error}</span> : null}
       {state.checkout ? (
         <Card padded stack>
           <p style={{ margin: 0 }}>
-            <strong>Invoice {state.checkout.invoiceId.slice(0, 8)}…</strong> · {state.checkout.amount}{" "}
-            {state.checkout.currency}
+            <strong>Нэхэмжлэл {state.checkout.invoiceId.slice(0, 8)}…</strong> · {state.checkout.amount} {state.checkout.currency}
           </p>
           <p className="ui-text-muted" style={{ margin: 0 }}>
             {state.checkout.callbackNote}
@@ -39,14 +38,14 @@ export function StartPaidCheckoutForm({ organizationId, planId, planLabel, disab
           {state.checkout.paymentUrl ? (
             <p style={{ margin: 0 }}>
               <a href={state.checkout.paymentUrl} rel="noopener noreferrer" className="ui-table__link">
-                Open bank app link
+                Банкны апп холбоос нээх
               </a>
             </p>
           ) : null}
           {state.checkout.bankAppLinks.length > 0 ? (
             <details style={{ marginTop: "var(--space-2)" }}>
               <summary className="ui-text-muted" style={{ cursor: "pointer", fontSize: "var(--text-sm)" }}>
-                All bank deeplinks ({state.checkout.bankAppLinks.length})
+                Бүх банкны deeplink ({state.checkout.bankAppLinks.length})
               </summary>
               <ul style={{ margin: "var(--space-2) 0 0", paddingLeft: "1.1rem", fontSize: "var(--text-sm)" }}>
                 {state.checkout.bankAppLinks.map((l, i) => (
@@ -56,7 +55,7 @@ export function StartPaidCheckoutForm({ organizationId, planId, planLabel, disab
                         {l.name ?? l.description ?? "Bank"}
                       </a>
                     ) : (
-                      (l.name ?? l.description ?? "Bank")
+                      l.name ?? l.description ?? "Bank"
                     )}
                   </li>
                 ))}
@@ -66,7 +65,7 @@ export function StartPaidCheckoutForm({ organizationId, planId, planLabel, disab
           {state.checkout.qrImageDataUrl ? (
             <div style={{ marginTop: "var(--space-2)" }}>
               <p className="ui-text-faint" style={{ margin: "0 0 var(--space-2)" }}>
-                Scan with your banking app
+                Банкны апп-аараа QR уншуулж төлнө үү
               </p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={state.checkout.qrImageDataUrl} alt="QPay QR" width={200} height={200} style={{ maxWidth: "100%" }} />
@@ -77,11 +76,8 @@ export function StartPaidCheckoutForm({ organizationId, planId, planLabel, disab
             </p>
           ) : null}
           <p className="ui-text-faint" style={{ margin: "var(--space-3) 0 0" }}>
-            Return to{" "}
-            <Link href="/billing" className="ui-table__link">
-              Billing
-            </Link>{" "}
-            to watch invoice status. Activation happens only after QPay reports PAID and we re-fetch payment state.
+            Төлбөрийн дараа <Link href="/billing" className="ui-table__link">Billing</Link> хэсгээс нэхэмжлэлийн төлөвөө
+            шалгана уу. Subscription нь төлбөр баталгаажсаны дараа идэвхжинэ.
           </p>
         </Card>
       ) : null}
