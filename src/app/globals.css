@@ -83,6 +83,261 @@ code {
   font-size: 0.9em;
 }
 
+.marketing-home {
+  padding-bottom: 5rem;
+}
+
+.marketing-shell {
+  width: min(1120px, calc(100% - 2rem));
+  margin: 0 auto;
+}
+
+.marketing-hero {
+  padding: 4.5rem 0 3rem;
+}
+
+.marketing-hero__grid {
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+}
+
+.marketing-hero__copy {
+  display: grid;
+  gap: 1rem;
+}
+
+.marketing-eyebrow,
+.marketing-kicker {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: var(--color-accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.marketing-hero h1,
+.marketing-section h2,
+.marketing-final h2 {
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+}
+
+.marketing-hero h1 {
+  max-width: 12ch;
+  font-size: clamp(2.3rem, 5vw, 4.5rem);
+}
+
+.marketing-hero__lead,
+.marketing-section__intro p,
+.marketing-feature-card p,
+.marketing-step p,
+.marketing-trust__list,
+.marketing-final p,
+.marketing-preview__header p,
+.marketing-insight__text {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.marketing-hero__lead {
+  max-width: 42rem;
+  font-size: 1.05rem;
+}
+
+.marketing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.marketing-hero__highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0;
+  margin: 0.25rem 0 0;
+  list-style: none;
+}
+
+.marketing-hero__highlights li {
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-subtle);
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.marketing-preview {
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.marketing-preview__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.marketing-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: var(--color-status-success-bg);
+  color: var(--color-status-success);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.marketing-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.marketing-metric-card {
+  padding: 1rem;
+  border-radius: 0.9rem;
+  background: var(--color-bg-muted);
+  display: grid;
+  gap: 0.35rem;
+}
+
+.marketing-metric-card span,
+.marketing-metric-card small,
+.marketing-insight__label {
+  color: var(--color-text-muted);
+}
+
+.marketing-metric-card strong {
+  font-size: 1.35rem;
+}
+
+.marketing-insight {
+  padding: 1rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.marketing-insight__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.marketing-insight ul,
+.marketing-trust__list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.marketing-section {
+  padding: 1.5rem 0;
+}
+
+.marketing-section--subtle {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.marketing-section--compact {
+  padding-top: 2rem;
+}
+
+.marketing-section__intro {
+  display: grid;
+  gap: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+
+.marketing-section__intro h2,
+.marketing-final h2 {
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  max-width: 18ch;
+}
+
+.marketing-card-grid,
+.marketing-steps {
+  display: grid;
+  gap: 1rem;
+}
+
+.marketing-feature-card,
+.marketing-step {
+  padding: 1.25rem;
+}
+
+.marketing-feature-card h3,
+.marketing-step h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.marketing-step__number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: var(--color-text-primary);
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+}
+
+.marketing-trust,
+.marketing-final {
+  padding: 1.5rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.marketing-trust__list {
+  color: var(--color-text-secondary);
+}
+
+@media (min-width: 820px) {
+  .marketing-hero__grid,
+  .marketing-final,
+  .marketing-trust {
+    grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+  }
+
+  .marketing-card-grid,
+  .marketing-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 819px) {
+  .marketing-hero {
+    padding-top: 3rem;
+  }
+
+  .marketing-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .marketing-actions--stack-mobile {
+    flex-direction: column;
+  }
+
+  .marketing-actions--stack-mobile .ui-button {
+    width: 100%;
+  }
+}
+
 /* =============================================================================
    Primitives — UI layer (UX-1)
    ============================================================================= */
