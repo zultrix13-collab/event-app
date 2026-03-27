@@ -61,6 +61,22 @@ export default async function AppHome() {
       color: 'bg-purple-50 hover:bg-purple-100 border-purple-200',
       titleColor: 'text-purple-800',
     },
+    {
+      href: '/app/green',
+      icon: '🌿',
+      title: 'Ногоон оролцоо',
+      description: 'Алхам бүртгэж байгаль хамгаал',
+      color: 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200',
+      titleColor: 'text-emerald-800',
+    },
+    {
+      href: '/app/complaints',
+      icon: '📣',
+      title: 'Санал хүсэлт',
+      description: 'Санал, гомдлоо илгээх',
+      color: 'bg-orange-50 hover:bg-orange-100 border-orange-200',
+      titleColor: 'text-orange-800',
+    },
   ];
 
   return (

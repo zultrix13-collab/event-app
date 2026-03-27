@@ -2,6 +2,9 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import { getSupabaseEnv } from "@/lib/env/server";
 
+// Alias for modules that import createAdminClient
+export const createAdminClient = getSupabaseAdminClient;
+
 export function getSupabaseAdminClient() {
   const { url } = getSupabaseEnv();
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

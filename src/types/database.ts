@@ -2157,8 +2157,129 @@ export type Database = {
           { foreignKeyName: 'user_locations_checkpoint_id_fkey'; columns: ['checkpoint_id']; referencedRelation: 'qr_checkpoints'; referencedColumns: ['id'] }
         ];
       };
+      // ── Sprint 5: Green + Admin ────────────────────────────────────
+      step_logs: {
+        Row: {
+          id: string;
+          user_id: string;
+          steps: number;
+          date: string;
+          co2_saved_grams: number;
+          source: 'healthkit' | 'health_connect' | 'manual';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          steps: number;
+          date?: string;
+          co2_saved_grams?: number;
+          source?: 'healthkit' | 'health_connect' | 'manual';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['step_logs']['Insert']>;
+        Relationships: [
+          { foreignKeyName: 'step_logs_user_id_fkey'; columns: ['user_id']; referencedRelation: 'profiles'; referencedColumns: ['id'] }
+        ];
+      };
+      badges: {
+        Row: {
+          id: string;
+          name: string;
+          name_en: string | null;
+          description: string | null;
+          description_en: string | null;
+          icon: string;
+          requirement_steps: number;
+          badge_type: 'steps' | 'co2' | 'attendance' | 'special';
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          name_en?: string | null;
+          description?: string | null;
+          description_en?: string | null;
+          icon: string;
+          requirement_steps?: number;
+          badge_type?: 'steps' | 'co2' | 'attendance' | 'special';
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['badges']['Insert']>;
+        Relationships: [];
+      };
+      user_badges: {
+        Row: {
+          id: string;
+          user_id: string;
+          badge_id: string;
+          earned_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          badge_id: string;
+          earned_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['user_badges']['Insert']>;
+        Relationships: [
+          { foreignKeyName: 'user_badges_user_id_fkey'; columns: ['user_id']; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+          { foreignKeyName: 'user_badges_badge_id_fkey'; columns: ['badge_id']; referencedRelation: 'badges'; referencedColumns: ['id'] }
+        ];
+      };
+      complaints: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          subject: string;
+          description: string;
+          category: 'general' | 'service' | 'technical' | 'safety' | 'other';
+          status: 'open' | 'in_progress' | 'resolved' | 'closed';
+          priority: 'low' | 'normal' | 'high' | 'urgent';
+          assigned_to: string | null;
+          resolved_at: string | null;
+          sla_deadline: string | null;
+          admin_notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          subject: string;
+          description: string;
+          category?: 'general' | 'service' | 'technical' | 'safety' | 'other';
+          status?: 'open' | 'in_progress' | 'resolved' | 'closed';
+          priority?: 'low' | 'normal' | 'high' | 'urgent';
+          assigned_to?: string | null;
+          resolved_at?: string | null;
+          sla_deadline?: string | null;
+          admin_notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['complaints']['Insert']>;
+        Relationships: [
+          { foreignKeyName: 'complaints_user_id_fkey'; columns: ['user_id']; referencedRelation: 'profiles'; referencedColumns: ['id'] }
+        ];
+      };
     };
-    Views: Record<string, never>;
+    Views: {
+      leaderboard: {
+        Row: {
+          user_id: string;
+          full_name: string | null;
+          country: string | null;
+          organization: string | null;
+          total_steps: number;
+          total_co2_saved: number;
+          badge_count: number;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       bootstrap_organization_subscription: {
         Args: {
@@ -2647,4 +2768,62 @@ export type UserLocationRow = {
   zone_id: string | null;
   checkpoint_id: string | null;
   located_at: string;
+};
+
+// ── Sprint 5: Green + Admin Types ────────────────────────────────────
+
+export type StepLogRow = {
+  id: string;
+  user_id: string;
+  steps: number;
+  date: string;
+  co2_saved_grams: number;
+  source: 'healthkit' | 'health_connect' | 'manual';
+  created_at: string;
+  updated_at: string;
+};
+
+export type BadgeRow = {
+  id: string;
+  name: string;
+  name_en: string | null;
+  description: string | null;
+  description_en: string | null;
+  icon: string;
+  requirement_steps: number;
+  badge_type: 'steps' | 'co2' | 'attendance' | 'special';
+  created_at: string;
+};
+
+export type UserBadgeRow = {
+  id: string;
+  user_id: string;
+  badge_id: string;
+  earned_at: string;
+};
+
+export type ComplaintRow = {
+  id: string;
+  user_id: string | null;
+  subject: string;
+  description: string;
+  category: 'general' | 'service' | 'technical' | 'safety' | 'other';
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  assigned_to: string | null;
+  resolved_at: string | null;
+  sla_deadline: string | null;
+  admin_notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type LeaderboardRow = {
+  user_id: string;
+  full_name: string | null;
+  country: string | null;
+  organization: string | null;
+  total_steps: number;
+  total_co2_saved: number;
+  badge_count: number;
 };
