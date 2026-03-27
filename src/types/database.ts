@@ -1844,6 +1844,132 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['qpay_invoices']['Insert']>;
         Relationships: [];
       };
+      kb_documents: {
+        Row: {
+          id: string;
+          title: string;
+          title_en: string | null;
+          content: string;
+          content_en: string | null;
+          category: 'programme' | 'faq' | 'venue' | 'service' | 'general' | 'emergency';
+          source_url: string | null;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          title_en?: string | null;
+          content: string;
+          content_en?: string | null;
+          category?: 'programme' | 'faq' | 'venue' | 'service' | 'general' | 'emergency';
+          source_url?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['kb_documents']['Insert']>;
+        Relationships: [];
+      };
+      kb_chunks: {
+        Row: {
+          id: string;
+          document_id: string;
+          chunk_index: number;
+          content: string;
+          content_en: string | null;
+          embedding: number[] | null;
+          token_count: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          document_id: string;
+          chunk_index: number;
+          content: string;
+          content_en?: string | null;
+          embedding?: number[] | null;
+          token_count?: number | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['kb_chunks']['Insert']>;
+        Relationships: [{ foreignKeyName: 'kb_chunks_document_id_fkey'; columns: ['document_id']; referencedRelation: 'kb_documents'; referencedColumns: ['id'] }];
+      };
+      chat_sessions: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          session_token: string;
+          language: 'mn' | 'en';
+          started_at: string;
+          last_message_at: string;
+          is_escalated: boolean;
+          escalated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          session_token?: string;
+          language?: 'mn' | 'en';
+          started_at?: string;
+          last_message_at?: string;
+          is_escalated?: boolean;
+          escalated_at?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['chat_sessions']['Insert']>;
+        Relationships: [];
+      };
+      chat_messages: {
+        Row: {
+          id: string;
+          session_id: string;
+          role: 'user' | 'assistant' | 'system';
+          content: string;
+          language: string;
+          retrieved_chunk_ids: string[] | null;
+          tokens_used: number | null;
+          response_time_ms: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          role: 'user' | 'assistant' | 'system';
+          content: string;
+          language?: string;
+          retrieved_chunk_ids?: string[] | null;
+          tokens_used?: number | null;
+          response_time_ms?: number | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['chat_messages']['Insert']>;
+        Relationships: [{ foreignKeyName: 'chat_messages_session_id_fkey'; columns: ['session_id']; referencedRelation: 'chat_sessions'; referencedColumns: ['id'] }];
+      };
+      operator_handoffs: {
+        Row: {
+          id: string;
+          session_id: string;
+          user_id: string | null;
+          reason: string | null;
+          status: 'waiting' | 'assigned' | 'resolved';
+          assigned_to: string | null;
+          created_at: string;
+          resolved_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          user_id?: string | null;
+          reason?: string | null;
+          status?: 'waiting' | 'assigned' | 'resolved';
+          assigned_to?: string | null;
+          created_at?: string;
+          resolved_at?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['operator_handoffs']['Insert']>;
+        Relationships: [{ foreignKeyName: 'operator_handoffs_session_id_fkey'; columns: ['session_id']; referencedRelation: 'chat_sessions'; referencedColumns: ['id'] }];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -1884,6 +2010,33 @@ export type Database = {
       decrement_session_count: {
         Args: { p_session_id: string };
         Returns: void;
+      };
+      search_kb_chunks: {
+        Args: {
+          query_embedding: number[];
+          match_threshold?: number;
+          match_count?: number;
+        };
+        Returns: {
+          id: string;
+          document_id: string;
+          content: string;
+          content_en: string | null;
+          similarity: number;
+        }[];
+      };
+      search_kb_keyword: {
+        Args: {
+          query_text: string;
+          match_count?: number;
+        };
+        Returns: {
+          id: string;
+          document_id: string;
+          content: string;
+          content_en: string | null;
+          rank: number;
+        }[];
       };
     };
     Enums: Record<string, never>;
@@ -2166,4 +2319,81 @@ export type WalletCreditResult = {
   transaction_id?: string;
   new_balance?: number;
   idempotent?: boolean;
+};
+
+// ── AI / RAG Types (Sprint 4-A) ────────────────────────────────
+
+export type KbDocumentRow = {
+  id: string;
+  title: string;
+  title_en: string | null;
+  content: string;
+  content_en: string | null;
+  category: 'programme' | 'faq' | 'venue' | 'service' | 'general' | 'emergency';
+  source_url: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type KbChunkRow = {
+  id: string;
+  document_id: string;
+  chunk_index: number;
+  content: string;
+  content_en: string | null;
+  embedding: number[] | null;
+  token_count: number | null;
+  created_at: string;
+};
+
+export type ChatSessionRow = {
+  id: string;
+  user_id: string | null;
+  session_token: string;
+  language: 'mn' | 'en';
+  started_at: string;
+  last_message_at: string;
+  is_escalated: boolean;
+  escalated_at: string | null;
+};
+
+export type ChatMessageRow = {
+  id: string;
+  session_id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  language: string;
+  retrieved_chunk_ids: string[] | null;
+  tokens_used: number | null;
+  response_time_ms: number | null;
+  created_at: string;
+};
+
+export type OperatorHandoffRow = {
+  id: string;
+  session_id: string;
+  user_id: string | null;
+  reason: string | null;
+  status: 'waiting' | 'assigned' | 'resolved';
+  assigned_to: string | null;
+  created_at: string;
+  resolved_at: string | null;
+};
+
+// RPC search result types
+export type SearchKbChunksResult = {
+  id: string;
+  document_id: string;
+  content: string;
+  content_en: string | null;
+  similarity: number;
+};
+
+export type SearchKbKeywordResult = {
+  id: string;
+  document_id: string;
+  content: string;
+  content_en: string | null;
+  rank: number;
 };
