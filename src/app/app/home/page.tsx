@@ -46,6 +46,14 @@ export default async function AppHome() {
       titleColor: 'text-yellow-800',
     },
     {
+      href: '/app/map',
+      icon: '🗺️',
+      title: 'Газрын зураг',
+      description: 'Арга хэмжааны газрын зураг харах',
+      color: 'bg-green-50 hover:bg-green-100 border-green-200',
+      titleColor: 'text-green-800',
+    },
+    {
       href: '/app/notifications',
       icon: '🔔',
       title: 'Мэдэгдлүүд',

@@ -1970,6 +1970,193 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['operator_handoffs']['Insert']>;
         Relationships: [{ foreignKeyName: 'operator_handoffs_session_id_fkey'; columns: ['session_id']; referencedRelation: 'chat_sessions'; referencedColumns: ['id'] }];
       };
+      // ── Map / Indoor Navigation (Sprint 4-B) ─────────────────────
+      map_pois: {
+        Row: {
+          id: string;
+          name: string;
+          name_en: string | null;
+          description: string | null;
+          description_en: string | null;
+          category: 'venue' | 'hotel' | 'restaurant' | 'transport' | 'attraction' | 'medical' | 'other';
+          latitude: number;
+          longitude: number;
+          address: string | null;
+          image_url: string | null;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          name_en?: string | null;
+          description?: string | null;
+          description_en?: string | null;
+          category?: 'venue' | 'hotel' | 'restaurant' | 'transport' | 'attraction' | 'medical' | 'other';
+          latitude: number;
+          longitude: number;
+          address?: string | null;
+          image_url?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          name_en?: string | null;
+          description?: string | null;
+          description_en?: string | null;
+          category?: 'venue' | 'hotel' | 'restaurant' | 'transport' | 'attraction' | 'medical' | 'other';
+          latitude?: number;
+          longitude?: number;
+          address?: string | null;
+          image_url?: string | null;
+          is_active?: boolean;
+        };
+        Relationships: [];
+      };
+      floor_plans: {
+        Row: {
+          id: string;
+          name: string;
+          name_en: string | null;
+          floor_number: number;
+          svg_url: string | null;
+          svg_content: string | null;
+          width_meters: number | null;
+          height_meters: number | null;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          name_en?: string | null;
+          floor_number?: number;
+          svg_url?: string | null;
+          svg_content?: string | null;
+          width_meters?: number | null;
+          height_meters?: number | null;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          name_en?: string | null;
+          floor_number?: number;
+          svg_url?: string | null;
+          svg_content?: string | null;
+          width_meters?: number | null;
+          height_meters?: number | null;
+          is_active?: boolean;
+        };
+        Relationships: [];
+      };
+      indoor_zones: {
+        Row: {
+          id: string;
+          floor_plan_id: string;
+          name: string;
+          name_en: string | null;
+          zone_type: 'room' | 'hall' | 'registration' | 'restaurant' | 'medical' | 'toilet' | 'exit' | 'shop' | 'stage';
+          x_percent: number;
+          y_percent: number;
+          width_percent: number;
+          height_percent: number;
+          color: string;
+          qr_code: string | null;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          floor_plan_id: string;
+          name: string;
+          name_en?: string | null;
+          zone_type?: 'room' | 'hall' | 'registration' | 'restaurant' | 'medical' | 'toilet' | 'exit' | 'shop' | 'stage';
+          x_percent: number;
+          y_percent: number;
+          width_percent?: number;
+          height_percent?: number;
+          color?: string;
+          qr_code?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          floor_plan_id?: string;
+          name?: string;
+          name_en?: string | null;
+          zone_type?: 'room' | 'hall' | 'registration' | 'restaurant' | 'medical' | 'toilet' | 'exit' | 'shop' | 'stage';
+          x_percent?: number;
+          y_percent?: number;
+          width_percent?: number;
+          height_percent?: number;
+          color?: string;
+          qr_code?: string | null;
+          is_active?: boolean;
+        };
+        Relationships: [{ foreignKeyName: 'indoor_zones_floor_plan_id_fkey'; columns: ['floor_plan_id']; referencedRelation: 'floor_plans'; referencedColumns: ['id'] }];
+      };
+      qr_checkpoints: {
+        Row: {
+          id: string;
+          zone_id: string;
+          qr_code: string;
+          label: string | null;
+          label_en: string | null;
+          scanned_count: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          zone_id: string;
+          qr_code: string;
+          label?: string | null;
+          label_en?: string | null;
+          scanned_count?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          zone_id?: string;
+          qr_code?: string;
+          label?: string | null;
+          label_en?: string | null;
+          scanned_count?: number;
+        };
+        Relationships: [{ foreignKeyName: 'qr_checkpoints_zone_id_fkey'; columns: ['zone_id']; referencedRelation: 'indoor_zones'; referencedColumns: ['id'] }];
+      };
+      user_locations: {
+        Row: {
+          id: string;
+          user_id: string;
+          zone_id: string | null;
+          checkpoint_id: string | null;
+          located_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          zone_id?: string | null;
+          checkpoint_id?: string | null;
+          located_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          zone_id?: string | null;
+          checkpoint_id?: string | null;
+          located_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'user_locations_user_id_fkey'; columns: ['user_id']; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+          { foreignKeyName: 'user_locations_zone_id_fkey'; columns: ['zone_id']; referencedRelation: 'indoor_zones'; referencedColumns: ['id'] },
+          { foreignKeyName: 'user_locations_checkpoint_id_fkey'; columns: ['checkpoint_id']; referencedRelation: 'qr_checkpoints'; referencedColumns: ['id'] }
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -2396,4 +2583,68 @@ export type SearchKbKeywordResult = {
   content: string;
   content_en: string | null;
   rank: number;
+};
+
+// ── Map / Indoor Navigation Types (Sprint 4-B) ────────────────────────────────
+
+export type MapPoiRow = {
+  id: string;
+  name: string;
+  name_en: string | null;
+  description: string | null;
+  description_en: string | null;
+  category: 'venue' | 'hotel' | 'restaurant' | 'transport' | 'attraction' | 'medical' | 'other';
+  latitude: number;
+  longitude: number;
+  address: string | null;
+  image_url: string | null;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type FloorPlanRow = {
+  id: string;
+  name: string;
+  name_en: string | null;
+  floor_number: number;
+  svg_url: string | null;
+  svg_content: string | null;
+  width_meters: number | null;
+  height_meters: number | null;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type IndoorZoneRow = {
+  id: string;
+  floor_plan_id: string;
+  name: string;
+  name_en: string | null;
+  zone_type: 'room' | 'hall' | 'registration' | 'restaurant' | 'medical' | 'toilet' | 'exit' | 'shop' | 'stage';
+  x_percent: number;
+  y_percent: number;
+  width_percent: number;
+  height_percent: number;
+  color: string;
+  qr_code: string | null;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type QrCheckpointRow = {
+  id: string;
+  zone_id: string;
+  qr_code: string;
+  label: string | null;
+  label_en: string | null;
+  scanned_count: number;
+  created_at: string;
+};
+
+export type UserLocationRow = {
+  id: string;
+  user_id: string;
+  zone_id: string | null;
+  checkpoint_id: string | null;
+  located_at: string;
 };
