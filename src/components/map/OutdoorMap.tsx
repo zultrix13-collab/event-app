@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect, useRef, useState } from 'react';
 import type { MapPOI } from '@/modules/map/types';
 
@@ -13,59 +12,74 @@ const CATEGORY_ICONS: Record<string, string> = {
   other: '📍',
 };
 
+const CATEGORY_LABELS: Record<string, string> = {
+  all: 'Бүгд',
+  venue: '🏛️ Газар',
+  hotel: '🏨 Буудал',
+  restaurant: '🍽️ Хоол',
+  transport: '✈️ Тээвэр',
+  medical: '🏥 Эмнэлэг',
+};
+
 export default function OutdoorMap({ pois }: { pois: MapPOI[] }) {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<unknown>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const [selectedPOI, setSelectedPOI] = useState<MapPOI | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>('all');
+  const [mapLoaded, setMapLoaded] = useState(false);
+
+  const token = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY;
 
   useEffect(() => {
-    if (!mapContainer.current || mapRef.current) return;
+    if (!mapContainer.current || mapRef.current || !token) return;
 
-    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-    if (!token) return;
-
-    import('mapbox-gl').then((mapboxgl) => {
-      mapboxgl.default.accessToken = token;
-      const map = new mapboxgl.default.Map({
-        container: mapContainer.current!,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: [106.9177, 47.9077],
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${token}&libraries=marker&v=beta`;
+    script.async = true;
+    script.onload = () => {
+      const map = new window.google.maps.Map(mapContainer.current!, {
+        center: { lat: 47.9077, lng: 106.9177 },
         zoom: 13,
+        mapId: 'event-app-map',
+        disableDefaultUI: false,
+        zoomControl: true,
+        streetViewControl: false,
       });
-
       mapRef.current = map;
 
+      // Add markers
       pois.forEach((poi) => {
         const el = document.createElement('div');
-        el.className = 'cursor-pointer text-2xl select-none';
+        el.className = 'text-2xl cursor-pointer select-none';
+        el.style.cssText = 'font-size:28px;line-height:1;';
         el.textContent = CATEGORY_ICONS[poi.category] ?? '📍';
-        el.title = poi.name;
 
-        new mapboxgl.default.Marker({ element: el })
-          .setLngLat([poi.longitude, poi.latitude])
-          .addTo(map);
+        const marker = new window.google.maps.marker.AdvancedMarkerElement({
+          map,
+          position: { lat: Number(poi.latitude), lng: Number(poi.longitude) },
+          content: el,
+          title: poi.name,
+        });
 
-        el.addEventListener('click', () => setSelectedPOI(poi));
+        marker.addListener('click', () => setSelectedPOI(poi));
+        markersRef.current.push(marker);
       });
-    });
 
-    return () => {
-      if (mapRef.current && typeof (mapRef.current as { remove?: () => void }).remove === 'function') {
-        (mapRef.current as { remove: () => void }).remove();
-      }
-      mapRef.current = null;
+      setMapLoaded(true);
     };
-  }, [pois]);
+    document.head.appendChild(script);
+  }, [pois, token]);
 
-  const filteredPOIs = activeFilter === 'all' ? pois : pois.filter((p) => p.category === activeFilter);
-  const hasToken = !!process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+  const filteredPOIs = activeFilter === 'all'
+    ? pois
+    : pois.filter(p => p.category === activeFilter);
 
   return (
     <div className="space-y-4">
       {/* Category filter */}
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {['all', 'venue', 'hotel', 'restaurant', 'transport', 'medical'].map((cat) => (
+        {Object.entries(CATEGORY_LABELS).map(([cat, label]) => (
           <button
             key={cat}
             onClick={() => setActiveFilter(cat)}
@@ -75,13 +89,13 @@ export default function OutdoorMap({ pois }: { pois: MapPOI[] }) {
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
             }`}
           >
-            {cat === 'all' ? 'Бүгд' : (CATEGORY_ICONS[cat] ?? '') + ' ' + cat}
+            {label}
           </button>
         ))}
       </div>
 
-      {/* Map or fallback */}
-      {hasToken ? (
+      {/* Map */}
+      {token ? (
         <div
           ref={mapContainer}
           className="w-full h-72 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700"
@@ -90,58 +104,57 @@ export default function OutdoorMap({ pois }: { pois: MapPOI[] }) {
         <div className="w-full h-72 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700">
           <div className="text-center text-slate-500">
             <div className="text-4xl mb-2">🗺️</div>
-            <div className="font-medium">MapBox token шаардлагатай</div>
-            <div className="text-sm">NEXT_PUBLIC_MAPBOX_TOKEN тохируулна уу</div>
+            <div className="font-medium">Google Maps token шаардлагатай</div>
+            <div className="text-sm">NEXT_PUBLIC_GOOGLE_MAPS_KEY тохируулна уу</div>
           </div>
         </div>
       )}
 
       {/* Selected POI detail */}
       {selectedPOI && (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-green-300 dark:border-green-700 shadow-sm">
           <div className="flex justify-between items-start">
-            <div>
-              <div className="font-bold">{selectedPOI.name}</div>
-              {selectedPOI.name_en && (
-                <div className="text-sm text-slate-500">{selectedPOI.name_en}</div>
-              )}
-              {selectedPOI.address && (
-                <div className="text-xs text-slate-400 mt-1">📍 {selectedPOI.address}</div>
-              )}
-              {selectedPOI.description && (
-                <div className="text-sm mt-2">{selectedPOI.description}</div>
-              )}
+            <div className="flex gap-3">
+              <span className="text-3xl">{CATEGORY_ICONS[selectedPOI.category]}</span>
+              <div>
+                <div className="font-bold">{selectedPOI.name}</div>
+                {selectedPOI.name_en && <div className="text-sm text-slate-500">{selectedPOI.name_en}</div>}
+                {selectedPOI.address && <div className="text-xs text-slate-400 mt-1">📍 {selectedPOI.address}</div>}
+                {selectedPOI.description && <div className="text-sm mt-2 text-slate-600 dark:text-slate-300">{selectedPOI.description}</div>}
+              </div>
             </div>
-            <button
-              onClick={() => setSelectedPOI(null)}
-              className="text-slate-400 hover:text-slate-600"
-            >
-              ✕
-            </button>
+            <button onClick={() => setSelectedPOI(null)} className="text-slate-400 hover:text-slate-600 text-lg">✕</button>
           </div>
           <a
             href={`https://www.google.com/maps/dir/?api=1&destination=${selectedPOI.latitude},${selectedPOI.longitude}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 inline-flex items-center gap-1 text-sm text-green-600 hover:text-green-500"
+            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-500"
           >
             🧭 Google Maps-аар чиглэл авах →
           </a>
         </div>
       )}
 
-      {/* POI list */}
+      {/* POI List */}
       <div className="space-y-2">
-        {filteredPOIs.map((poi) => (
+        <h3 className="font-semibold text-sm text-slate-500 uppercase tracking-wide">
+          {filteredPOIs.length} цэг
+        </h3>
+        {filteredPOIs.map(poi => (
           <button
             key={poi.id}
             onClick={() => setSelectedPOI(poi)}
-            className="w-full text-left bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-200 dark:border-slate-700 hover:border-green-400 transition-colors flex items-center gap-3"
+            className={`w-full text-left rounded-xl p-3 border transition-colors flex items-center gap-3 ${
+              selectedPOI?.id === poi.id
+                ? 'border-green-400 bg-green-50 dark:bg-green-950/20'
+                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-green-300'
+            }`}
           >
-            <span className="text-2xl">{CATEGORY_ICONS[poi.category] ?? '📍'}</span>
-            <div>
-              <div className="font-medium text-sm">{poi.name}</div>
-              {poi.address && <div className="text-xs text-slate-400">{poi.address}</div>}
+            <span className="text-2xl">{CATEGORY_ICONS[poi.category]}</span>
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-sm truncate">{poi.name}</div>
+              {poi.address && <div className="text-xs text-slate-400 truncate">{poi.address}</div>}
             </div>
           </button>
         ))}
