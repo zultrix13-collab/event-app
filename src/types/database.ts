@@ -1524,6 +1524,326 @@ export type Database = {
         };
         Relationships: [];
       };
+      products: {
+        Row: {
+          id: string;
+          name: string;
+          name_en: string | null;
+          description: string | null;
+          description_en: string | null;
+          price: number;
+          currency: string;
+          image_url: string | null;
+          category: 'merchandise' | 'food' | 'ticket' | 'other';
+          stock_count: number;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          name_en?: string | null;
+          description?: string | null;
+          description_en?: string | null;
+          price: number;
+          currency?: string;
+          image_url?: string | null;
+          category?: 'merchandise' | 'food' | 'ticket' | 'other';
+          stock_count?: number;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['products']['Insert']>;
+        Relationships: [];
+      };
+      orders: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          status: 'pending' | 'paid' | 'cancelled' | 'refunded';
+          total_amount: number;
+          currency: string;
+          payment_method: string | null;
+          payment_ref: string | null;
+          notes: string | null;
+          created_at: string;
+          paid_at: string | null;
+          cancelled_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          status?: 'pending' | 'paid' | 'cancelled' | 'refunded';
+          total_amount: number;
+          currency?: string;
+          payment_method?: string | null;
+          payment_ref?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          paid_at?: string | null;
+          cancelled_at?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['orders']['Insert']>;
+        Relationships: [];
+      };
+      order_items: {
+        Row: {
+          id: string;
+          order_id: string | null;
+          product_id: string | null;
+          product_name: string;
+          quantity: number;
+          unit_price: number;
+          total_price: number;
+        };
+        Insert: {
+          id?: string;
+          order_id?: string | null;
+          product_id?: string | null;
+          product_name: string;
+          quantity: number;
+          unit_price: number;
+          total_price: number;
+        };
+        Update: Partial<Database['public']['Tables']['order_items']['Insert']>;
+        Relationships: [];
+      };
+      wallets: {
+        Row: {
+          id: string;
+          user_id: string;
+          balance: number;
+          currency: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          balance?: number;
+          currency?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['wallets']['Insert']>;
+        Relationships: [];
+      };
+      wallet_transactions: {
+        Row: {
+          id: string;
+          wallet_id: string;
+          user_id: string | null;
+          type: 'topup' | 'purchase' | 'refund' | 'transfer';
+          amount: number;
+          balance_before: number;
+          balance_after: number;
+          reference_id: string | null;
+          idempotency_key: string | null;
+          description: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          wallet_id: string;
+          user_id?: string | null;
+          type: 'topup' | 'purchase' | 'refund' | 'transfer';
+          amount: number;
+          balance_before: number;
+          balance_after: number;
+          reference_id?: string | null;
+          idempotency_key?: string | null;
+          description?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['wallet_transactions']['Insert']>;
+        Relationships: [];
+      };
+      transport_bookings: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          type: 'taxi' | 'rental' | 'shuttle' | 'airport_transfer';
+          pickup_location: string | null;
+          dropoff_location: string | null;
+          pickup_time: string | null;
+          flight_number: string | null;
+          passenger_count: number;
+          status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+          provider_ref: string | null;
+          notes: string | null;
+          order_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          type?: 'taxi' | 'rental' | 'shuttle' | 'airport_transfer';
+          pickup_location?: string | null;
+          dropoff_location?: string | null;
+          pickup_time?: string | null;
+          flight_number?: string | null;
+          passenger_count?: number;
+          status?: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+          provider_ref?: string | null;
+          notes?: string | null;
+          order_id?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['transport_bookings']['Insert']>;
+        Relationships: [];
+      };
+      restaurants: {
+        Row: {
+          id: string;
+          name: string;
+          name_en: string | null;
+          description: string | null;
+          cuisine_type: string | null;
+          location: string | null;
+          opening_hours: Json | null;
+          image_url: string | null;
+          qr_table_prefix: string | null;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          name_en?: string | null;
+          description?: string | null;
+          cuisine_type?: string | null;
+          location?: string | null;
+          opening_hours?: Json | null;
+          image_url?: string | null;
+          qr_table_prefix?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['restaurants']['Insert']>;
+        Relationships: [];
+      };
+      restaurant_bookings: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          restaurant_name: string;
+          table_qr_code: string | null;
+          booking_time: string;
+          party_size: number;
+          status: 'pending' | 'confirmed' | 'cancelled';
+          special_requests: string | null;
+          order_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          restaurant_name: string;
+          table_qr_code?: string | null;
+          booking_time: string;
+          party_size?: number;
+          status?: 'pending' | 'confirmed' | 'cancelled';
+          special_requests?: string | null;
+          order_id?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['restaurant_bookings']['Insert']>;
+        Relationships: [];
+      };
+      hotels: {
+        Row: {
+          id: string;
+          name: string;
+          name_en: string | null;
+          description: string | null;
+          address: string | null;
+          stars: number | null;
+          image_url: string | null;
+          booking_url: string | null;
+          phone: string | null;
+          distance_km: number | null;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          name_en?: string | null;
+          description?: string | null;
+          address?: string | null;
+          stars?: number | null;
+          image_url?: string | null;
+          booking_url?: string | null;
+          phone?: string | null;
+          distance_km?: number | null;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['hotels']['Insert']>;
+        Relationships: [];
+      };
+      lost_found_items: {
+        Row: {
+          id: string;
+          reporter_id: string | null;
+          type: 'lost' | 'found';
+          item_name: string;
+          description: string | null;
+          image_url: string | null;
+          last_seen_location: string | null;
+          contact_info: string | null;
+          status: 'open' | 'resolved' | 'closed';
+          resolved_by: string | null;
+          resolved_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          reporter_id?: string | null;
+          type: 'lost' | 'found';
+          item_name: string;
+          description?: string | null;
+          image_url?: string | null;
+          last_seen_location?: string | null;
+          contact_info?: string | null;
+          status?: 'open' | 'resolved' | 'closed';
+          resolved_by?: string | null;
+          resolved_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['lost_found_items']['Insert']>;
+        Relationships: [];
+      };
+      qpay_invoices: {
+        Row: {
+          id: string;
+          order_id: string | null;
+          user_id: string | null;
+          invoice_id: string | null;
+          qr_text: string | null;
+          qr_image: string | null;
+          amount: number;
+          status: 'pending' | 'paid' | 'expired' | 'cancelled';
+          expires_at: string | null;
+          paid_at: string | null;
+          callback_data: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id?: string | null;
+          user_id?: string | null;
+          invoice_id?: string | null;
+          qr_text?: string | null;
+          qr_image?: string | null;
+          amount: number;
+          status?: 'pending' | 'paid' | 'expired' | 'cancelled';
+          expires_at?: string | null;
+          paid_at?: string | null;
+          callback_data?: Json | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['qpay_invoices']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -1676,4 +1996,174 @@ export type NotificationRow = {
   sent_by: string | null;
   sent_at: string;
   is_emergency: boolean;
+};
+
+// ============================================================
+// Sprint 3: Services + Payment types
+// ============================================================
+
+export type ProductRow = {
+  id: string;
+  name: string;
+  name_en: string | null;
+  description: string | null;
+  description_en: string | null;
+  price: number;
+  currency: string;
+  image_url: string | null;
+  category: 'merchandise' | 'food' | 'ticket' | 'other';
+  stock_count: number;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type OrderRow = {
+  id: string;
+  user_id: string | null;
+  status: 'pending' | 'paid' | 'cancelled' | 'refunded';
+  total_amount: number;
+  currency: string;
+  payment_method: string | null;
+  payment_ref: string | null;
+  notes: string | null;
+  created_at: string;
+  paid_at: string | null;
+  cancelled_at: string | null;
+};
+
+export type OrderItemRow = {
+  id: string;
+  order_id: string;
+  product_id: string | null;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+};
+
+export type WalletRow = {
+  id: string;
+  user_id: string;
+  balance: number;
+  currency: string;
+  updated_at: string;
+};
+
+export type WalletTransactionRow = {
+  id: string;
+  wallet_id: string;
+  user_id: string | null;
+  type: 'topup' | 'purchase' | 'refund' | 'transfer';
+  amount: number;
+  balance_before: number;
+  balance_after: number;
+  reference_id: string | null;
+  idempotency_key: string | null;
+  description: string | null;
+  created_at: string;
+};
+
+export type TransportBookingRow = {
+  id: string;
+  user_id: string | null;
+  type: 'taxi' | 'rental' | 'shuttle' | 'airport_transfer';
+  pickup_location: string | null;
+  dropoff_location: string | null;
+  pickup_time: string | null;
+  flight_number: string | null;
+  passenger_count: number;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  provider_ref: string | null;
+  notes: string | null;
+  order_id: string | null;
+  created_at: string;
+};
+
+export type RestaurantBookingRow = {
+  id: string;
+  user_id: string | null;
+  restaurant_name: string;
+  table_qr_code: string | null;
+  booking_time: string;
+  party_size: number;
+  status: 'pending' | 'confirmed' | 'cancelled';
+  special_requests: string | null;
+  order_id: string | null;
+  created_at: string;
+};
+
+export type RestaurantRow = {
+  id: string;
+  name: string;
+  name_en: string | null;
+  description: string | null;
+  cuisine_type: string | null;
+  location: string | null;
+  opening_hours: Json | null;
+  image_url: string | null;
+  qr_table_prefix: string | null;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type HotelRow = {
+  id: string;
+  name: string;
+  name_en: string | null;
+  description: string | null;
+  address: string | null;
+  stars: number | null;
+  image_url: string | null;
+  booking_url: string | null;
+  phone: string | null;
+  distance_km: number | null;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type LostFoundItemRow = {
+  id: string;
+  reporter_id: string | null;
+  type: 'lost' | 'found';
+  item_name: string;
+  description: string | null;
+  image_url: string | null;
+  last_seen_location: string | null;
+  contact_info: string | null;
+  status: 'open' | 'resolved' | 'closed';
+  resolved_by: string | null;
+  resolved_at: string | null;
+  created_at: string;
+};
+
+export type QPayInvoiceRow = {
+  id: string;
+  order_id: string | null;
+  user_id: string | null;
+  invoice_id: string | null;
+  qr_text: string | null;
+  qr_image: string | null;
+  amount: number;
+  status: 'pending' | 'paid' | 'expired' | 'cancelled';
+  expires_at: string | null;
+  paid_at: string | null;
+  callback_data: Json | null;
+  created_at: string;
+};
+
+// RPC function return types
+export type WalletDebitResult = {
+  success: boolean;
+  error?: string;
+  transaction_id?: string;
+  new_balance?: number;
+  idempotent?: boolean;
+};
+
+export type WalletCreditResult = {
+  success: boolean;
+  error?: string;
+  transaction_id?: string;
+  new_balance?: number;
+  idempotent?: boolean;
 };
