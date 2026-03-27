@@ -1,8 +1,8 @@
 import { getCurrentUserOrganization } from "@/modules/organizations/data";
-import { getSelectedActivePageCount } from "@/modules/meta/data";
 import { getActivePlan, getUsageCounters } from "@/modules/subscriptions/data";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
-export type EntitlementFeature = "connect_page" | "manual_sync" | "generate_ai_report";
+export type EntitlementFeature = "connect_resource" | "manual_sync" | "generate_report";
 
 export type EntitlementResult = {
   allowed: boolean;
@@ -22,6 +22,20 @@ function currentDayKey(date = new Date()): string {
   return `${date.getUTCFullYear()}-${month}-${day}`;
 }
 
+/**
+ * Domain-specific resource count-г энд тохируулна уу.
+ * Default: usage_counters дотор `pages_connected` metric ашиглана (DB schema-тай нийцнэ).
+ */
+async function getConnectedResourceCount(organizationId: string): Promise<number> {
+  const admin = getSupabaseAdminClient();
+  const { count } = await admin
+    .from("usage_counters")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", organizationId)
+    .eq("metric_key", "pages_connected");
+  return count ?? 0;
+}
+
 export async function checkOrganizationFeatureLimit(
   userId: string,
   feature: EntitlementFeature
@@ -31,12 +45,12 @@ export async function checkOrganizationFeatureLimit(
     return { allowed: false, limit: 0, used: 0, remaining: 0 };
   }
 
-  if (feature === "connect_page") {
+  if (feature === "connect_resource") {
     const organization = await getCurrentUserOrganization(userId);
     if (!organization) {
       return { allowed: false, limit: plan.max_pages, used: 0, remaining: plan.max_pages };
     }
-    const used = await getSelectedActivePageCount(organization.id);
+    const used = await getConnectedResourceCount(organization.id);
     const limit = plan.max_pages;
     return { allowed: used < limit, limit, used, remaining: Math.max(limit - used, 0) };
   }

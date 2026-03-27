@@ -130,15 +130,15 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
 
       <Card padded stack>
         <h2 className="ui-section-title" style={{ marginTop: 0 }}>
-          Meta connections
+          Integrations
         </h2>
-        {org.meta_connections.length === 0 ? (
+        {org.integration_connections.length === 0 ? (
           <p className="ui-text-muted" style={{ margin: 0 }}>
             No Meta connection.
           </p>
         ) : (
           <ul style={{ margin: 0, paddingLeft: "1.1rem", fontSize: "0.85rem" }}>
-            {org.meta_connections.map((m, i) => (
+            {org.integration_connections.map((m, i) => (
               <li key={`mc-${i}`} style={{ marginBottom: "0.35rem" }}>
                 <strong>{m.status}</strong>
                 {m.last_validated_at ? ` · validated ${m.last_validated_at}` : null}
@@ -155,9 +155,9 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
 
       <Card padded stack>
         <h2 className="ui-section-title" style={{ marginTop: 0 }}>
-          Meta pages ({org.meta_pages.length})
+          Connected Resources ({org.integration_resources.length})
         </h2>
-        {org.meta_pages.length === 0 ? (
+        {org.integration_resources.length === 0 ? (
           <p className="ui-text-muted" style={{ margin: 0 }}>
             No pages.
           </p>
@@ -173,15 +173,15 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
                 </tr>
               </thead>
               <tbody>
-                {org.meta_pages.map((p) => (
+                {org.integration_resources.map((p) => (
                   <tr key={p.id}>
                     <td>
                       {p.name}
                       <div className="ui-text-faint">
-                        <code>{p.meta_page_id}</code>
+                        <code>{p.resource_external_id}</code>
                       </div>
                     </td>
-                    <td>{p.is_selected ? "yes" : "no"}</td>
+                    <td>{p.is_active ? "yes" : "no"}</td>
                     <td>{p.status}</td>
                     <td>{p.last_synced_at ?? "—"}</td>
                   </tr>
@@ -209,7 +209,7 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
             attempts: j.attempt_count,
             created: j.created_at,
             error: j.error_message,
-            page: j.meta_pages?.name
+            page: j.integration_resources?.name
           }))}
         />
       </Card>
@@ -226,7 +226,7 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
             attempts: j.attempt_count,
             created: j.created_at,
             error: j.error_message,
-            page: j.meta_pages?.name
+            page: j.integration_resources?.name
           }))}
         />
       </Card>

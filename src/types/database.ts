@@ -11,6 +11,16 @@ export type Database = {
           avatar_url: string | null;
           created_at: string;
           updated_at: string;
+          // Event app extensions
+          role: string | null;
+          phone: string | null;
+          country: string | null;
+          organization: string | null;
+          is_approved: boolean | null;
+          approved_by: string | null;
+          approved_at: string | null;
+          is_active: boolean | null;
+          last_login_at: string | null;
         };
         Insert: {
           id: string;
@@ -19,6 +29,16 @@ export type Database = {
           avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;
+          // Event app extensions
+          role?: string | null;
+          phone?: string | null;
+          country?: string | null;
+          organization?: string | null;
+          is_approved?: boolean | null;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          is_active?: boolean | null;
+          last_login_at?: string | null;
         };
         Update: {
           id?: string;
@@ -27,6 +47,16 @@ export type Database = {
           avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;
+          // Event app extensions
+          role?: string | null;
+          phone?: string | null;
+          country?: string | null;
+          organization?: string | null;
+          is_approved?: boolean | null;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          is_active?: boolean | null;
+          last_login_at?: string | null;
         };
         Relationships: [];
       };
@@ -260,11 +290,11 @@ export type Database = {
           }
         ];
       };
-      meta_connections: {
+      integration_connections: {
         Row: {
           id: string;
           organization_id: string;
-          meta_user_id: string | null;
+          provider_user_id: string | null;
           access_token_encrypted: string | null;
           refresh_token_encrypted: string | null;
           token_expires_at: string | null;
@@ -278,7 +308,7 @@ export type Database = {
         Insert: {
           id?: string;
           organization_id: string;
-          meta_user_id?: string | null;
+          provider_user_id?: string | null;
           access_token_encrypted?: string | null;
           refresh_token_encrypted?: string | null;
           token_expires_at?: string | null;
@@ -292,7 +322,7 @@ export type Database = {
         Update: {
           id?: string;
           organization_id?: string;
-          meta_user_id?: string | null;
+          provider_user_id?: string | null;
           access_token_encrypted?: string | null;
           refresh_token_encrypted?: string | null;
           token_expires_at?: string | null;
@@ -313,17 +343,17 @@ export type Database = {
           }
         ];
       };
-      meta_pages: {
+      integration_resources: {
         Row: {
           id: string;
           organization_id: string;
-          meta_connection_id: string;
-          meta_page_id: string;
+          integration_connection_id: string;
+          resource_external_id: string;
           name: string;
           category: string | null;
           page_access_token_encrypted: string | null;
           is_selectable: boolean;
-          is_selected: boolean;
+          is_active: boolean;
           status: "active" | "deselected" | "revoked" | "error";
           last_synced_at: string | null;
           created_at: string;
@@ -332,13 +362,13 @@ export type Database = {
         Insert: {
           id?: string;
           organization_id: string;
-          meta_connection_id: string;
-          meta_page_id: string;
+          integration_connection_id: string;
+          resource_external_id: string;
           name: string;
           category?: string | null;
           page_access_token_encrypted?: string | null;
           is_selectable?: boolean;
-          is_selected?: boolean;
+          is_active?: boolean;
           status?: "active" | "deselected" | "revoked" | "error";
           last_synced_at?: string | null;
           created_at?: string;
@@ -347,13 +377,13 @@ export type Database = {
         Update: {
           id?: string;
           organization_id?: string;
-          meta_connection_id?: string;
-          meta_page_id?: string;
+          integration_connection_id?: string;
+          resource_external_id?: string;
           name?: string;
           category?: string | null;
           page_access_token_encrypted?: string | null;
           is_selectable?: boolean;
-          is_selected?: boolean;
+          is_active?: boolean;
           status?: "active" | "deselected" | "revoked" | "error";
           last_synced_at?: string | null;
           created_at?: string;
@@ -369,9 +399,9 @@ export type Database = {
           },
           {
             foreignKeyName: "meta_pages_meta_connection_id_fkey";
-            columns: ["meta_connection_id"];
+            columns: ["integration_connection_id"];
             isOneToOne: false;
-            referencedRelation: "meta_connections";
+            referencedRelation: "integration_connections";
             referencedColumns: ["id"];
           }
         ];
@@ -434,7 +464,7 @@ export type Database = {
             foreignKeyName: "meta_sync_jobs_meta_page_id_fkey";
             columns: ["meta_page_id"];
             isOneToOne: false;
-            referencedRelation: "meta_pages";
+            referencedRelation: "integration_resources";
             referencedColumns: ["id"];
           }
         ];
@@ -497,7 +527,7 @@ export type Database = {
             foreignKeyName: "page_daily_metrics_meta_page_id_fkey";
             columns: ["meta_page_id"];
             isOneToOne: false;
-            referencedRelation: "meta_pages";
+            referencedRelation: "integration_resources";
             referencedColumns: ["id"];
           }
         ];
@@ -572,7 +602,7 @@ export type Database = {
             foreignKeyName: "page_post_metrics_meta_page_id_fkey";
             columns: ["meta_page_id"];
             isOneToOne: false;
-            referencedRelation: "meta_pages";
+            referencedRelation: "integration_resources";
             referencedColumns: ["id"];
           }
         ];
@@ -635,7 +665,7 @@ export type Database = {
             foreignKeyName: "analysis_jobs_meta_page_id_fkey";
             columns: ["meta_page_id"];
             isOneToOne: false;
-            referencedRelation: "meta_pages";
+            referencedRelation: "integration_resources";
             referencedColumns: ["id"];
           },
           {
@@ -699,7 +729,7 @@ export type Database = {
             foreignKeyName: "analysis_reports_meta_page_id_fkey";
             columns: ["meta_page_id"];
             isOneToOne: false;
-            referencedRelation: "meta_pages";
+            referencedRelation: "integration_resources";
             referencedColumns: ["id"];
           },
           {
@@ -760,7 +790,7 @@ export type Database = {
             foreignKeyName: "recommendations_meta_page_id_fkey";
             columns: ["meta_page_id"];
             isOneToOne: false;
-            referencedRelation: "meta_pages";
+            referencedRelation: "integration_resources";
             referencedColumns: ["id"];
           },
           {
@@ -1063,6 +1093,437 @@ export type Database = {
           }
         ];
       };
+      vip_applications: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          full_name: string;
+          email: string;
+          organization: string | null;
+          position: string | null;
+          reason: string | null;
+          status: string;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          full_name: string;
+          email: string;
+          organization?: string | null;
+          position?: string | null;
+          reason?: string | null;
+          status?: string;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          full_name?: string;
+          email?: string;
+          organization?: string | null;
+          position?: string | null;
+          reason?: string | null;
+          status?: string;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      digital_ids: {
+        Row: {
+          id: string;
+          user_id: string;
+          qr_payload: string;
+          nfc_payload: string | null;
+          issued_at: string;
+          expires_at: string;
+          is_revoked: boolean;
+          hmac_signature: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          qr_payload: string;
+          nfc_payload?: string | null;
+          issued_at?: string;
+          expires_at: string;
+          is_revoked?: boolean;
+          hmac_signature: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          qr_payload?: string;
+          nfc_payload?: string | null;
+          issued_at?: string;
+          expires_at?: string;
+          is_revoked?: boolean;
+          hmac_signature?: string;
+        };
+        Relationships: [];
+      };
+      otp_attempts: {
+        Row: {
+          id: string;
+          email: string;
+          attempt_count: number;
+          last_attempt_at: string;
+          blocked_until: string | null;
+        };
+        Insert: {
+          id?: string;
+          email: string;
+          attempt_count?: number;
+          last_attempt_at?: string;
+          blocked_until?: string | null;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          attempt_count?: number;
+          last_attempt_at?: string;
+          blocked_until?: string | null;
+        };
+        Relationships: [];
+      };
+      venues: {
+        Row: {
+          id: string;
+          name: string;
+          name_en: string | null;
+          description: string | null;
+          capacity: number;
+          location: string | null;
+          floor: number | null;
+          map_coordinates: Json | null;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          name_en?: string | null;
+          description?: string | null;
+          capacity?: number;
+          location?: string | null;
+          floor?: number | null;
+          map_coordinates?: Json | null;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          name_en?: string | null;
+          description?: string | null;
+          capacity?: number;
+          location?: string | null;
+          floor?: number | null;
+          map_coordinates?: Json | null;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      speakers: {
+        Row: {
+          id: string;
+          full_name: string;
+          full_name_en: string | null;
+          title: string | null;
+          title_en: string | null;
+          organization: string | null;
+          organization_en: string | null;
+          bio: string | null;
+          bio_en: string | null;
+          avatar_url: string | null;
+          country: string | null;
+          social_links: Json | null;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          full_name: string;
+          full_name_en?: string | null;
+          title?: string | null;
+          title_en?: string | null;
+          organization?: string | null;
+          organization_en?: string | null;
+          bio?: string | null;
+          bio_en?: string | null;
+          avatar_url?: string | null;
+          country?: string | null;
+          social_links?: Json | null;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          full_name?: string;
+          full_name_en?: string | null;
+          title?: string | null;
+          title_en?: string | null;
+          organization?: string | null;
+          organization_en?: string | null;
+          bio?: string | null;
+          bio_en?: string | null;
+          avatar_url?: string | null;
+          country?: string | null;
+          social_links?: Json | null;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      event_sessions: {
+        Row: {
+          id: string;
+          title: string;
+          title_en: string | null;
+          description: string | null;
+          description_en: string | null;
+          session_type: 'general' | 'keynote' | 'workshop' | 'panel' | 'exhibition' | 'networking' | 'other';
+          venue_id: string | null;
+          starts_at: string;
+          ends_at: string;
+          capacity: number;
+          registered_count: number;
+          is_registration_open: boolean;
+          zone: 'green' | 'blue' | 'both';
+          tags: string[] | null;
+          is_published: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          title_en?: string | null;
+          description?: string | null;
+          description_en?: string | null;
+          session_type?: 'general' | 'keynote' | 'workshop' | 'panel' | 'exhibition' | 'networking' | 'other';
+          venue_id?: string | null;
+          starts_at: string;
+          ends_at: string;
+          capacity?: number;
+          registered_count?: number;
+          is_registration_open?: boolean;
+          zone?: 'green' | 'blue' | 'both';
+          tags?: string[] | null;
+          is_published?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          title_en?: string | null;
+          description?: string | null;
+          description_en?: string | null;
+          session_type?: 'general' | 'keynote' | 'workshop' | 'panel' | 'exhibition' | 'networking' | 'other';
+          venue_id?: string | null;
+          starts_at?: string;
+          ends_at?: string;
+          capacity?: number;
+          registered_count?: number;
+          is_registration_open?: boolean;
+          zone?: 'green' | 'blue' | 'both';
+          tags?: string[] | null;
+          is_published?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "event_sessions_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      session_speakers: {
+        Row: {
+          session_id: string;
+          speaker_id: string;
+          role: string;
+          sort_order: number;
+        };
+        Insert: {
+          session_id: string;
+          speaker_id: string;
+          role?: string;
+          sort_order?: number;
+        };
+        Update: {
+          session_id?: string;
+          speaker_id?: string;
+          role?: string;
+          sort_order?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "session_speakers_session_id_fkey";
+            columns: ["session_id"];
+            isOneToOne: false;
+            referencedRelation: "event_sessions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "session_speakers_speaker_id_fkey";
+            columns: ["speaker_id"];
+            isOneToOne: false;
+            referencedRelation: "speakers";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      seat_registrations: {
+        Row: {
+          id: string;
+          session_id: string;
+          user_id: string;
+          status: 'confirmed' | 'waitlisted' | 'cancelled';
+          registered_at: string;
+          cancelled_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          user_id: string;
+          status?: 'confirmed' | 'waitlisted' | 'cancelled';
+          registered_at?: string;
+          cancelled_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          session_id?: string;
+          user_id?: string;
+          status?: 'confirmed' | 'waitlisted' | 'cancelled';
+          registered_at?: string;
+          cancelled_at?: string | null;
+        };
+        Relationships: [];
+      };
+      attendance: {
+        Row: {
+          id: string;
+          session_id: string;
+          user_id: string;
+          checked_in_at: string;
+          check_in_method: 'qr' | 'nfc' | 'manual';
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          user_id: string;
+          checked_in_at?: string;
+          check_in_method?: 'qr' | 'nfc' | 'manual';
+        };
+        Update: {
+          id?: string;
+          session_id?: string;
+          user_id?: string;
+          checked_in_at?: string;
+          check_in_method?: 'qr' | 'nfc' | 'manual';
+        };
+        Relationships: [];
+      };
+      session_surveys: {
+        Row: {
+          id: string;
+          session_id: string;
+          user_id: string | null;
+          rating: number | null;
+          feedback: string | null;
+          submitted_at: string;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          user_id?: string | null;
+          rating?: number | null;
+          feedback?: string | null;
+          submitted_at?: string;
+        };
+        Update: {
+          id?: string;
+          session_id?: string;
+          user_id?: string | null;
+          rating?: number | null;
+          feedback?: string | null;
+          submitted_at?: string;
+        };
+        Relationships: [];
+      };
+      user_agenda: {
+        Row: {
+          user_id: string;
+          session_id: string;
+          added_at: string;
+        };
+        Insert: {
+          user_id: string;
+          session_id: string;
+          added_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          session_id?: string;
+          added_at?: string;
+        };
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          title: string;
+          title_en: string | null;
+          body: string;
+          body_en: string | null;
+          notification_type: 'general' | 'programme' | 'emergency' | 'system';
+          target_roles: string[] | null;
+          target_countries: string[] | null;
+          sent_by: string | null;
+          sent_at: string;
+          is_emergency: boolean;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          title_en?: string | null;
+          body: string;
+          body_en?: string | null;
+          notification_type?: 'general' | 'programme' | 'emergency' | 'system';
+          target_roles?: string[] | null;
+          target_countries?: string[] | null;
+          sent_by?: string | null;
+          sent_at?: string;
+          is_emergency?: boolean;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          title_en?: string | null;
+          body?: string;
+          body_en?: string | null;
+          notification_type?: 'general' | 'programme' | 'emergency' | 'system';
+          target_roles?: string[] | null;
+          target_countries?: string[] | null;
+          sent_by?: string | null;
+          sent_at?: string;
+          is_emergency?: boolean;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -1092,8 +1553,127 @@ export type Database = {
         };
         Returns: boolean;
       };
+      increment_otp_attempts: {
+        Args: { p_email: string };
+        Returns: void;
+      };
+      increment_session_count: {
+        Args: { p_session_id: string };
+        Returns: void;
+      };
+      decrement_session_count: {
+        Args: { p_session_id: string };
+        Returns: void;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
+};
+
+// ============================================================
+// Sprint 2: Programme + Notifications types (extended)
+// ============================================================
+
+export type VenueRow = {
+  id: string;
+  name: string;
+  name_en: string | null;
+  description: string | null;
+  capacity: number;
+  location: string | null;
+  floor: number | null;
+  map_coordinates: Json | null;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type SpeakerRow = {
+  id: string;
+  full_name: string;
+  full_name_en: string | null;
+  title: string | null;
+  title_en: string | null;
+  organization: string | null;
+  organization_en: string | null;
+  bio: string | null;
+  bio_en: string | null;
+  avatar_url: string | null;
+  country: string | null;
+  social_links: Json | null;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type EventSessionRow = {
+  id: string;
+  title: string;
+  title_en: string | null;
+  description: string | null;
+  description_en: string | null;
+  session_type: 'general' | 'keynote' | 'workshop' | 'panel' | 'exhibition' | 'networking' | 'other';
+  venue_id: string | null;
+  starts_at: string;
+  ends_at: string;
+  capacity: number;
+  registered_count: number;
+  is_registration_open: boolean;
+  zone: 'green' | 'blue' | 'both';
+  tags: string[] | null;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SessionSpeakerRow = {
+  session_id: string;
+  speaker_id: string;
+  role: string;
+  sort_order: number;
+};
+
+export type SeatRegistrationRow = {
+  id: string;
+  session_id: string;
+  user_id: string;
+  status: 'confirmed' | 'waitlisted' | 'cancelled';
+  registered_at: string;
+  cancelled_at: string | null;
+};
+
+export type AttendanceRow = {
+  id: string;
+  session_id: string;
+  user_id: string;
+  checked_in_at: string;
+  check_in_method: 'qr' | 'nfc' | 'manual';
+};
+
+export type SessionSurveyRow = {
+  id: string;
+  session_id: string;
+  user_id: string | null;
+  rating: number | null;
+  feedback: string | null;
+  submitted_at: string;
+};
+
+export type UserAgendaRow = {
+  user_id: string;
+  session_id: string;
+  added_at: string;
+};
+
+export type NotificationRow = {
+  id: string;
+  title: string;
+  title_en: string | null;
+  body: string;
+  body_en: string | null;
+  notification_type: 'general' | 'programme' | 'emergency' | 'system';
+  target_roles: string[] | null;
+  target_countries: string[] | null;
+  sent_by: string | null;
+  sent_at: string;
+  is_emergency: boolean;
 };

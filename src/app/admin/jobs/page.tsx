@@ -49,7 +49,7 @@ export default async function AdminJobsPage({ searchParams }: JobsPageProps) {
         </Link>
         <PageHeader
           className="ui-page-header--admin"
-          title="Sync & analysis jobs"
+          title="Jobs"
           description={
             <>
               Recent jobs across all orgs. Retry actions call the same execute entrypoints as the product; outcomes are
@@ -70,7 +70,7 @@ export default async function AdminJobsPage({ searchParams }: JobsPageProps) {
       </div>
 
       <section className="ui-admin-section">
-        <h2 className="ui-section-title">Meta sync jobs</h2>
+        <h2 className="ui-section-title">Sync jobs</h2>
         {syncFiltered.length === 0 ? (
           <p className="ui-text-muted">No sync jobs in window.</p>
         ) : (
@@ -136,7 +136,7 @@ function SyncJobItem({ j }: { j: SyncJobOpsRow }) {
   return (
     <li>
       <code>{j.id.slice(0, 8)}…</code> · {j.organizations?.name ?? j.organization_id} ·{" "}
-      {j.meta_pages?.name ?? "page"} · <strong>{j.job_type}</strong> · <Badge variant={jobStatusBadgeVariant(j.status)}>{j.status}</Badge>
+      {j.integration_resources?.name ?? "page"} · <strong>{j.job_type}</strong> · <Badge variant={jobStatusBadgeVariant(j.status)}>{j.status}</Badge>
       <span className="ui-text-muted"> · attempts {j.attempt_count}</span>
       <div className="ui-text-faint">{j.created_at}</div>
       {j.error_message ? (
@@ -157,7 +157,7 @@ function AnalysisJobItem({ j }: { j: AnalysisJobOpsRow }) {
   return (
     <li>
       <code>{j.id.slice(0, 8)}…</code> · {j.organizations?.name ?? j.organization_id} ·{" "}
-      {j.meta_pages?.name ?? "page"} · <Badge variant={jobStatusBadgeVariant(j.status)}>{j.status}</Badge>
+      {j.integration_resources?.name ?? "page"} · <Badge variant={jobStatusBadgeVariant(j.status)}>{j.status}</Badge>
       <span className="ui-text-muted"> · attempts {j.attempt_count}</span>
       {j.source_sync_job_id ? (
         <span className="ui-text-muted">

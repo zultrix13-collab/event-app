@@ -11,8 +11,6 @@ describe("isProtectedPath", () => {
     "/settings",
     "/pages",
     "/pages/123",
-    "/internal",
-    "/internal/ops",
     "/admin",
     "/admin/organizations",
     "/admin/billing",
@@ -43,7 +41,7 @@ describe("isPublicAuthPath", () => {
     }
   );
 
-  it.each(["/", "/dashboard", "/pricing", "/api/meta/callback"])("returns false for %s", (path) => {
+  it.each(["/", "/dashboard", "/pricing", "/api/health"])("returns false for %s", (path) => {
     expect(isPublicAuthPath(path)).toBe(false);
   });
 });

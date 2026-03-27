@@ -1,6 +1,6 @@
 /**
  * Admin / internal ops reads (service role).
- * Call only from routes gated by `requireSystemAdmin` (`/admin/*`) or `requireInternalOpsActor` (`/internal/ops/*`).
+ * Call only from routes gated by `requireSystemAdmin` (`/admin/*`).
  * See `docs/admin-auth-v1.md` — `/admin` is DB/bootstrap; internal ops also allows env allowlist without a row.
  */
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -23,7 +23,7 @@ export type OrganizationOpsRow = {
     plan_id: string;
     plans: { code: string; name: string } | null;
   }[];
-  meta_connections: {
+  integration_connections: {
     status: string;
     last_error: string | null;
     last_validated_at: string | null;
@@ -53,7 +53,7 @@ export type SyncJobOpsRow = {
   created_at: string;
   finished_at: string | null;
   organizations: { name: string; slug: string } | null;
-  meta_pages: { name: string } | null;
+  integration_resources: { name: string } | null;
 };
 
 export type AnalysisJobOpsRow = {
@@ -67,7 +67,7 @@ export type AnalysisJobOpsRow = {
   finished_at: string | null;
   source_sync_job_id: string | null;
   organizations: { name: string; slug: string } | null;
-  meta_pages: { name: string } | null;
+  integration_resources: { name: string } | null;
 };
 
 export type OperatorAuditEventRow = {
@@ -96,7 +96,7 @@ export async function getOrganizationsForOps(limit = 80): Promise<OrganizationOp
       `
       id, name, slug, status, created_at,
       subscriptions ( status, plan_id, plans (code, name) ),
-      meta_connections ( status, last_error, last_validated_at )
+      integration_connections ( status, last_error, last_validated_at )
     `
     )
     .order("created_at", { ascending: false })
@@ -106,15 +106,15 @@ export async function getOrganizationsForOps(limit = 80): Promise<OrganizationOp
     throw error;
   }
 
-  const rows = (data ?? []) as unknown as (Omit<OrganizationOpsRow, "subscriptions" | "meta_connections"> & {
+  const rows = (data ?? []) as unknown as (Omit<OrganizationOpsRow, "subscriptions" | "integration_connections"> & {
     subscriptions: OrganizationOpsRow["subscriptions"] | OrganizationOpsRow["subscriptions"][0] | null;
-    meta_connections: OrganizationOpsRow["meta_connections"][0] | OrganizationOpsRow["meta_connections"] | null;
+    integration_connections: OrganizationOpsRow["integration_connections"][0] | OrganizationOpsRow["integration_connections"] | null;
   })[];
 
   return rows.map((row) => ({
     ...row,
     subscriptions: asArray(row.subscriptions),
-    meta_connections: asArray(row.meta_connections)
+    integration_connections: asArray(row.integration_connections)
   }));
 }
 
@@ -151,9 +151,9 @@ export async function getOrganizationsForAdminList(limit = 500): Promise<Organiz
         `
         id, name, slug, status, created_at,
         subscriptions ( status, plan_id, plans (code, name) ),
-        meta_connections ( status, last_error, last_validated_at ),
+        integration_connections ( status, last_error, last_validated_at ),
         organization_members ( role, status, profiles ( email ) ),
-        meta_pages ( is_selected, status )
+        integration_resources ( is_active, status )
       `
       )
       .order("created_at", { ascending: false })
@@ -166,21 +166,21 @@ export async function getOrganizationsForAdminList(limit = 500): Promise<Organiz
     throw raw.error;
   }
 
-  const rows = (raw.data ?? []) as unknown as (Omit<OrganizationOpsRow, "subscriptions" | "meta_connections"> & {
+  const rows = (raw.data ?? []) as unknown as (Omit<OrganizationOpsRow, "subscriptions" | "integration_connections"> & {
     subscriptions: OrganizationOpsRow["subscriptions"] | OrganizationOpsRow["subscriptions"][0] | null;
-    meta_connections: OrganizationOpsRow["meta_connections"][0] | OrganizationOpsRow["meta_connections"] | null;
+    integration_connections: OrganizationOpsRow["integration_connections"][0] | OrganizationOpsRow["integration_connections"] | null;
     organization_members:
       | { role: string; status: string; profiles: { email: string } | null }[]
       | { role: string; status: string; profiles: { email: string } | null }
       | null;
-    meta_pages: { is_selected: boolean; status: string }[] | { is_selected: boolean; status: string } | null;
+    integration_resources: { is_active: boolean; status: string }[] | { is_active: boolean; status: string } | null;
   })[];
 
   return rows.map((row) => {
     const subscriptions = asArray(row.subscriptions);
-    const meta_connections = asArray(row.meta_connections);
+    const integration_connections = asArray(row.integration_connections);
     const members = asArray(row.organization_members);
-    const pages = asArray(row.meta_pages);
+    const pages = asArray(row.integration_resources);
 
     const owner = members.find((m) => m.role === "owner" && m.status === "active");
     const ownerEmail = owner?.profiles?.email?.trim() ?? null;
@@ -189,9 +189,9 @@ export async function getOrganizationsForAdminList(limit = 500): Promise<Organiz
     const subscriptionStatus = sub?.status ?? null;
     const planLabel = sub?.plans ? `${sub.plans.name} (${sub.plans.code})` : null;
 
-    const selectedPagesCount = pages.filter((p) => p.is_selected && p.status === "active").length;
+    const selectedPagesCount = pages.filter((p) => p.is_active && p.status === "active").length;
 
-    const metas = meta_connections;
+    const metas = integration_connections;
     const metaConnectionSummary =
       metas.length === 0
         ? "No connection"
@@ -204,7 +204,7 @@ export async function getOrganizationsForAdminList(limit = 500): Promise<Organiz
       status: row.status,
       created_at: row.created_at,
       subscriptions,
-      meta_connections
+      integration_connections
     };
 
     return {
@@ -228,11 +228,11 @@ export type OrganizationAdminDetail = {
       status: string;
       profiles: { id: string; email: string; full_name: string | null } | null;
     }>;
-    meta_pages: Array<{
+    integration_resources: Array<{
       id: string;
-      meta_page_id: string;
+      resource_external_id: string;
       name: string;
-      is_selected: boolean;
+      is_active: boolean;
       status: string;
       last_synced_at: string | null;
       category: string | null;
@@ -245,7 +245,7 @@ export type OrganizationAdminDetail = {
         current_period_end: string | null;
       })
     | null;
-  metaConnections: OrganizationOpsRow["meta_connections"];
+  integrationConnections: OrganizationOpsRow["integration_connections"];
   usageCounters: Array<{
     id: string;
     period_key: string;
@@ -273,9 +273,9 @@ export async function getOrganizationAdminDetail(organizationId: string): Promis
         status, plan_id, current_period_start, current_period_end, cancel_at_period_end, trial_ends_at,
         plans ( code, name, max_pages, syncs_per_day, monthly_ai_reports, report_retention_days )
       ),
-      meta_connections ( id, status, last_error, last_validated_at, meta_user_id, granted_scopes, token_expires_at, created_at ),
+      integration_connections ( id, status, last_error, last_validated_at, provider_user_id, granted_scopes, token_expires_at, created_at ),
       organization_members ( role, status, profiles ( id, email, full_name ) ),
-      meta_pages ( id, meta_page_id, name, is_selected, status, last_synced_at, category )
+      integration_resources ( id, resource_external_id, name, is_active, status, last_synced_at, category )
     `
     )
     .eq("id", organizationId)
@@ -293,26 +293,26 @@ export async function getOrganizationAdminDetail(organizationId: string): Promis
     created_at: string;
     updated_at: string;
     subscriptions: OrganizationOpsRow["subscriptions"] | OrganizationOpsRow["subscriptions"][0] | null;
-    meta_connections: OrganizationOpsRow["meta_connections"] | OrganizationOpsRow["meta_connections"][0] | null;
+    integration_connections: OrganizationOpsRow["integration_connections"] | OrganizationOpsRow["integration_connections"][0] | null;
     organization_members:
       | { role: string; status: string; profiles: { id: string; email: string; full_name: string | null } | null }[]
       | { role: string; status: string; profiles: { id: string; email: string; full_name: string | null } | null }
       | null;
-    meta_pages:
+    integration_resources:
       | Array<{
           id: string;
-          meta_page_id: string;
+          resource_external_id: string;
           name: string;
-          is_selected: boolean;
+          is_active: boolean;
           status: string;
           last_synced_at: string | null;
           category: string | null;
         }>
       | {
           id: string;
-          meta_page_id: string;
+          resource_external_id: string;
           name: string;
-          is_selected: boolean;
+          is_active: boolean;
           status: string;
           last_synced_at: string | null;
           category: string | null;
@@ -321,9 +321,9 @@ export async function getOrganizationAdminDetail(organizationId: string): Promis
   };
 
   const subscriptions = asArray(o.subscriptions);
-  const meta_connections = asArray(o.meta_connections);
+  const integration_connections = asArray(o.integration_connections);
   const organization_members = asArray(o.organization_members);
-  const meta_pages = asArray(o.meta_pages);
+  const integration_resources = asArray(o.integration_resources);
 
   const subFirst = subscriptions[0] as
     | (OrganizationOpsRow["subscriptions"][0] & {
@@ -362,9 +362,9 @@ export async function getOrganizationAdminDetail(organizationId: string): Promis
     created_at: o.created_at,
     updated_at: o.updated_at,
     subscriptions,
-    meta_connections,
+    integration_connections,
     organization_members,
-    meta_pages
+    integration_resources
   };
 
   const [
@@ -383,7 +383,7 @@ export async function getOrganizationAdminDetail(organizationId: string): Promis
         `
         id, organization_id, meta_page_id, job_type, status, attempt_count, error_message, created_at, finished_at,
         organizations ( name, slug ),
-        meta_pages ( name )
+        integration_resources ( name )
       `
       )
       .eq("organization_id", organizationId)
@@ -395,7 +395,7 @@ export async function getOrganizationAdminDetail(organizationId: string): Promis
         `
         id, organization_id, meta_page_id, status, attempt_count, error_message, created_at, finished_at, source_sync_job_id,
         organizations ( name, slug ),
-        meta_pages ( name )
+        integration_resources ( name )
       `
       )
       .eq("organization_id", organizationId)
@@ -430,7 +430,7 @@ export async function getOrganizationAdminDetail(organizationId: string): Promis
   return {
     organization,
     subscriptionWithPlan,
-    metaConnections: meta_connections,
+    integrationConnections: integration_connections,
     usageCounters: (usageRes.data ?? []) as OrganizationAdminDetail["usageCounters"],
     recentSyncJobs: (syncRes.data ?? []) as SyncJobOpsRow[],
     recentAnalysisJobs: (analysisRes.data ?? []) as AnalysisJobOpsRow[],
@@ -449,7 +449,7 @@ export async function getRecentSyncJobsForOps(limit = 50): Promise<SyncJobOpsRow
       `
       id, organization_id, meta_page_id, job_type, status, attempt_count, error_message, created_at, finished_at,
       organizations ( name, slug ),
-      meta_pages ( name )
+      integration_resources ( name )
     `
     )
     .order("created_at", { ascending: false })
@@ -470,7 +470,7 @@ export async function getRecentAnalysisJobsForOps(limit = 50): Promise<AnalysisJ
       `
       id, organization_id, meta_page_id, status, attempt_count, error_message, created_at, finished_at, source_sync_job_id,
       organizations ( name, slug ),
-      meta_pages ( name )
+      integration_resources ( name )
     `
     )
     .order("created_at", { ascending: false })

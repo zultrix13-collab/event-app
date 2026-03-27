@@ -3,6 +3,9 @@ import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@/types/database";
 import { getSupabaseEnv } from "@/lib/env/server";
 
+// Alias for backward compatibility and new auth module usage
+export const createClient = getSupabaseServerClient;
+
 export async function getSupabaseServerClient() {
   const cookieStore = await cookies();
   const { url, anonKey } = getSupabaseEnv();

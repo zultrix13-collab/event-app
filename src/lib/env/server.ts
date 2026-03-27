@@ -13,12 +13,13 @@ export function getSupabaseEnv() {
   };
 }
 
-export function getMetaEnv() {
-  return {
-    appId: getRequiredEnv("META_APP_ID"),
-    appSecret: getRequiredEnv("META_APP_SECRET"),
-    redirectUri: getRequiredEnv("META_REDIRECT_URI"),
-    apiVersion: process.env.META_API_VERSION || "v20.0",
-    tokenEncryptionKey: getRequiredEnv("META_TOKEN_ENCRYPTION_KEY")
-  };
-}
+/**
+ * Domain-specific environment variables энд нэмнэ үү.
+ * Жишээ:
+ *   export function getMyIntegrationEnv() {
+ *     return {
+ *       apiKey: getRequiredEnv("MY_INTEGRATION_API_KEY"),
+ *       baseUrl: process.env.MY_INTEGRATION_BASE_URL ?? "https://api.example.com",
+ *     };
+ *   }
+ */

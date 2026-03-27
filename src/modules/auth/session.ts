@@ -5,7 +5,12 @@ export const getCurrentUser = cache(async () => {
   const supabase = await getSupabaseServerClient();
   const { data, error } = await supabase.auth.getUser();
   if (error) {
-    console.error("[auth/session] getUser failed:", error.message);
+    const missingSession =
+      error.message.includes("Auth session missing") ||
+      error.message.includes("session missing");
+    if (!missingSession) {
+      console.error("[auth/session] getUser failed:", error.message);
+    }
     return null;
   }
   return data.user;

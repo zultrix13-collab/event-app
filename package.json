@@ -1,6 +1,7 @@
 {
-  "name": "martech-mvp",
+  "name": "event-app",
   "version": "0.1.0",
+  "description": "Event Digital Platform",
   "private": true,
   "scripts": {
     "dev": "next dev",
