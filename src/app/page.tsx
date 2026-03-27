@@ -1,214 +1,69 @@
-import Link from "next/link";
-import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/modules/auth/session";
-import { getCurrentUserOrganization } from "@/modules/organizations/data";
+import Link from 'next/link';
 
-export const metadata: Metadata = {
-  title: "MarTech — Facebook Page analytics ба AI зөвлөмж",
-  description:
-    "Facebook Page-ээ холбоод үзүүлэлтээ нэг дор харж, AI-аас ойлгомжтой дүгнэлт болон хэрэгжүүлэхүйц зөвлөмж аваарай."
-};
-
-export default async function HomePage() {
-  const user = await getCurrentUser();
-
-  if (user) {
-    const organization = await getCurrentUserOrganization(user.id);
-    if (!organization) {
-      redirect("/setup-organization");
-    }
-
-    redirect("/dashboard");
-  }
-
+export default function HomePage() {
   return (
-    <main className="marketing-home">
-      <header className="marketing-topbar">
-        <div className="marketing-shell marketing-topbar__inner">
-          <Link href="/" className="marketing-brand" aria-label="MarTech нүүр">
-            <span className="marketing-brand__mark">M</span>
-            <span className="marketing-brand__text">MarTech</span>
-          </Link>
-
-          <nav className="marketing-nav" aria-label="Нүүр navigation">
-            <a href="#features">Боломжууд</a>
-            <a href="#how-it-works">Яаж ажилладаг</a>
-            <a href="#trust">Итгэл</a>
-            <Link href="/pricing">Үнэ</Link>
-          </nav>
-
-          <div className="marketing-topbar__actions">
-            <Link href="/login" className="ui-button ui-button--ghost">
-              Нэвтрэх
-            </Link>
-            <Link href="/login" className="ui-button ui-button--primary ui-button--sm">
-              Эхлэх
-            </Link>
-          </div>
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-green-950 to-slate-900 text-white">
+      {/* Header */}
+      <header className="flex items-center justify-between px-8 py-6 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center font-bold text-lg">E</div>
+          <span className="text-xl font-bold tracking-tight">Event Digital Platform</span>
         </div>
+        <Link
+          href="/login"
+          className="px-5 py-2 rounded-lg bg-green-500 hover:bg-green-400 text-white font-semibold text-sm transition-colors"
+        >
+          Нэвтрэх
+        </Link>
       </header>
 
-      <section className="marketing-hero">
-        <div className="marketing-shell marketing-hero__grid">
-          <div className="marketing-hero__copy">
-            <span className="marketing-eyebrow">MarTech</span>
-            <h1>Facebook Page-ийн үзүүлэлтээ нэг дор харж, AI зөвлөмж аваарай</h1>
-            <p className="marketing-hero__lead">
-              Meta account-аа холбоод page-ээ сонго. MarTech таны page metrics-ийг sync хийж, гол өөрчлөлтүүдийг
-              ойлгомжтой тайлбарлан, дараагийн алхмын зөвлөмж гаргана.
-            </p>
-            <div className="marketing-actions">
-              <Link href="/login" className="ui-button ui-button--primary">
-                Эхлэх
-              </Link>
-              <Link href="/pricing" className="ui-button ui-button--secondary">
-                Үнэ харах
-              </Link>
-            </div>
-            <ul className="marketing-hero__highlights" aria-label="Гол давуу талууд">
-              <li>Meta Page холбоно</li>
-              <li>Metrics-ээ sync хийнэ</li>
-              <li>AI дүгнэлт, зөвлөмж авна</li>
-            </ul>
-          </div>
-
-          <div className="marketing-preview ui-card">
-            <div className="marketing-preview__chrome" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-            </div>
-            <div className="marketing-preview__header">
-              <div>
-                <strong>Dashboard preview</strong>
-                <p>Нэг page-ийн гүйцэтгэлийг богинохон, ойлгомжтой харуулна.</p>
-              </div>
-              <span className="marketing-status">Live sync</span>
-            </div>
-
-            <div className="marketing-metrics">
-              <article className="marketing-metric-card">
-                <span>Reach</span>
-                <strong>128.4K</strong>
-                <small>Сүүлийн 14 хоног</small>
-              </article>
-              <article className="marketing-metric-card">
-                <span>Engagement</span>
-                <strong>4.8%</strong>
-                <small>Өмнөх цонхоос харьцуулна</small>
-              </article>
-              <article className="marketing-metric-card">
-                <span>Posts</span>
-                <strong>12</strong>
-                <small>Stored post metrics</small>
-              </article>
-            </div>
-
-            <div className="marketing-insight ui-card">
-              <div className="marketing-insight__meta">
-                <p className="marketing-insight__label">AI дүгнэлт</p>
-                <span className="marketing-insight__badge">Deterministic + AI</span>
-              </div>
-              <p className="marketing-insight__text">
-                Reach буурах дохио ажиглагдсан ч тогтвортой туршилт хийвэл engagement-ийг сэргээх боломж харагдаж
-                байна.
-              </p>
-              <ul>
-                <li>Сэтгэгдэл өдөөдөг CTA-тай 2 пост турших</li>
-                <li>Сүүлийн өндөр reach авсан форматыг дахин ашиглах</li>
-              </ul>
-            </div>
-          </div>
+      {/* Hero */}
+      <section className="flex flex-col items-center justify-center text-center px-6 py-28 gap-6">
+        <span className="text-sm font-semibold tracking-widest text-green-400 uppercase">Official Digital Platform</span>
+        <h1 className="text-5xl md:text-6xl font-extrabold leading-tight max-w-3xl">
+          Арга хэмжааны <span className="text-green-400">дижитал</span> туршлага
+        </h1>
+        <p className="text-lg text-slate-300 max-w-xl">
+          Хөтөлбөр, бүртгэл, үйлчилгээ, газрын зураг — бүгд нэг дор. Оролцогч, зохион байгуулагч, VIP зочдод зориулсан нэгдсэн платформ.
+        </p>
+        <div className="flex gap-4 mt-4 flex-wrap justify-center">
+          <Link
+            href="/login"
+            className="px-8 py-3 rounded-xl bg-green-500 hover:bg-green-400 font-bold text-lg transition-colors shadow-lg shadow-green-900/40"
+          >
+            Нэвтрэх
+          </Link>
+          <Link
+            href="/apply-vip"
+            className="px-8 py-3 rounded-xl border border-white/20 hover:bg-white/10 font-semibold text-lg transition-colors"
+          >
+            VIP бүртгэл
+          </Link>
         </div>
       </section>
 
-      <section id="features" className="marketing-section">
-        <div className="marketing-shell">
-          <div className="marketing-section__intro">
-            <span className="marketing-kicker">Энэ яг юу хийдэг вэ?</span>
-            <h2>Тоон мэдээллийг ойлгомжтой болгож, дараагийн алхмыг тодруулна</h2>
+      {/* Features */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6 px-8 pb-24 max-w-5xl mx-auto">
+        {[
+          { icon: '📅', title: 'Хөтөлбөр', desc: 'Интерактив календарь, суудал захиалга, хувийн agenda' },
+          { icon: '🗺️', title: 'Газрын зураг', desc: 'Дотоод болон гадаад навигаци, offline дэмжлэг' },
+          { icon: '🤖', title: 'AI Туслах', desc: 'Монгол/Англи хэлээр хариулах RAG chatbot' },
+          { icon: '💳', title: 'Төлбөр', desc: 'QPay, SocialPay, дижитал wallet' },
+          { icon: '🔔', title: 'Мэдэгдэл', desc: 'Push, SMS, яаралтай broadcast' },
+          { icon: '🪪', title: 'Дижитал үнэмлэх', desc: 'QR + NFC, offline баталгаажуулалт' },
+        ].map((f) => (
+          <div key={f.title} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors">
+            <div className="text-3xl mb-3">{f.icon}</div>
+            <h3 className="font-bold text-lg mb-1">{f.title}</h3>
+            <p className="text-slate-400 text-sm">{f.desc}</p>
           </div>
-          <div className="marketing-card-grid">
-            <article className="ui-card marketing-feature-card">
-              <h3>Meta-гаа холбоно</h3>
-              <p>Facebook Page-үүдээ аюулгүйгээр холбоод, аль page-ээ хянахаа сонгоно.</p>
-            </article>
-            <article className="ui-card marketing-feature-card">
-              <h3>Өгөгдлөө sync хийнэ</h3>
-              <p>Reach, impressions, engagement, post metrics-ээ нэг дор татаж хадгална.</p>
-            </article>
-            <article className="ui-card marketing-feature-card">
-              <h3>AI тайлбар, зөвлөмж авна</h3>
-              <p>Зөвхөн тоо биш — ямар өөрчлөлт гарч байгааг товч тайлбарлаж, хэрэгжүүлэх алхам санал болгоно.</p>
-            </article>
-          </div>
-        </div>
+        ))}
       </section>
 
-      <section id="how-it-works" className="marketing-section marketing-section--subtle">
-        <div className="marketing-shell">
-          <div className="marketing-section__intro">
-            <span className="marketing-kicker">Яаж ажилладаг вэ?</span>
-            <h2>Эхлэхэд төвөггүй, 3 алхамтай</h2>
-          </div>
-
-          <div className="marketing-steps">
-            <article className="marketing-step ui-card">
-              <span className="marketing-step__number">1</span>
-              <h3>Нэвтэрч байгууллагаа үүсгэнэ</h3>
-              <p>И-мэйлээр нэвтрээд өөрийн байгууллагын орчноо хэдхэн алхмаар бэлдэнэ.</p>
-            </article>
-            <article className="marketing-step ui-card">
-              <span className="marketing-step__number">2</span>
-              <h3>Meta account болон Page-ээ холбоно</h3>
-              <p>Хянахыг хүссэн Facebook Page-ээ сонгоход систем эхний sync-ээ ажиллуулна.</p>
-            </article>
-            <article className="marketing-step ui-card">
-              <span className="marketing-step__number">3</span>
-              <h3>Dashboard, trends, AI зөвлөмжөө үзнэ</h3>
-              <p>Гүйцэтгэлийн өөрчлөлтүүдээ хараад, дараа нь юу туршихаа ойлгомжтой болгоно.</p>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section id="trust" className="marketing-section">
-        <div className="marketing-shell">
-          <div className="marketing-trust ui-card">
-            <div>
-              <span className="marketing-kicker">Итгэлтэй ашиглахад зориулсан суурь</span>
-              <h2>Хэт төвөгтэй биш, хэрэгтэй зүйл дээрээ төвлөрсөн</h2>
-            </div>
-            <ul className="marketing-trust__list">
-              <li>Meta Graph API ашиглан page data татна</li>
-              <li>Access token-ууд сервер талд хадгалагдана</li>
-              <li>Dashboard + AI recommendations-д хэрэгтэй хэмжээнд л өгөгдөл ашиглана</li>
-              <li>Хуурай тоо биш, шийдвэр гаргахад туслах товч тайлбар өгнө</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section className="marketing-section marketing-section--compact">
-        <div className="marketing-shell">
-          <div className="marketing-final ui-card">
-            <div>
-              <span className="marketing-kicker">Эхлэхэд бэлэн үү?</span>
-              <h2>Facebook Page-ийнхээ гүйцэтгэлийг илүү ойлгомжтой хянаж эхлээрэй</h2>
-              <p>Нэвтэрч байгууллагаа үүсгээд, page-ээ холбоод, анхны sync болон AI дүгнэлтээ аваарай.</p>
-            </div>
-            <div className="marketing-actions marketing-actions--stack-mobile">
-              <Link href="/login" className="ui-button ui-button--primary">
-                Эхлэх
-              </Link>
-              <Link href="/pricing" className="ui-button ui-button--secondary">
-                Төлөвлөгөө харах
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Footer */}
+      <footer className="text-center py-6 text-slate-500 text-sm border-t border-white/10">
+        © 2026 Event Digital Platform. All rights reserved.
+      </footer>
     </main>
   );
 }
