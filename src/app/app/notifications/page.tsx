@@ -72,7 +72,8 @@ export default async function NotificationsPage() {
     .limit(50);
 
   const emergencyCount = (notifications ?? []).filter((n) => n.is_emergency).length;
-  const unreadCount = (notifications ?? []).filter((n) => !n.is_read).length;
+  // Note: is_read may not exist on all notification types — use 0 as fallback
+  const unreadCount = (notifications ?? []).filter((n) => !(n as { is_read?: boolean }).is_read).length;
 
   return (
     <div className="max-w-2xl mx-auto p-4">
@@ -117,7 +118,7 @@ export default async function NotificationsPage() {
                 ? (notif.notification_type as NotifType)
                 : 'general';
             const config = TYPE_CONFIG[typeKey];
-            const isUnread = !notif.is_read;
+            const isUnread = !(notif as Record<string, unknown> & { is_read?: boolean }).is_read;
 
             return (
               <div
