@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import type { Product, ProductCategory } from '@/modules/services/types';
-import { getProducts } from '@/modules/services/actions';
 import { createClient as createBrowserClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 

@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:saas_base/core/supabase/supabase_client.dart';
-import 'package:saas_base/features/auth/providers/auth_provider.dart';
-import 'package:saas_base/shared/models/organization.dart';
+import 'package:event_app/core/supabase/supabase_client.dart';
+import 'package:event_app/features/auth/providers/auth_provider.dart';
+import 'package:event_app/shared/models/organization.dart';
 
 // ---------------------------------------------------------------------------
 // Org State

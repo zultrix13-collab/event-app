@@ -1,0 +1,45 @@
+# Environment / secrets
+.env
+google-services.json
+GoogleService-Info.plist
+
+# Signing keystores
+*.keystore
+*.jks
+android/key.properties
+
+# Flutter build outputs
+/build/
+
+# Dart tool / IDE
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Generated files (rebuild with build_runner)
+*.g.dart
+*.freezed.dart
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# macOS
+.DS_Store
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+
+# Android
+android/.gradle/
+android/captures/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+
+# Test coverage
+coverage/

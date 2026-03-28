@@ -657,3 +657,26 @@ export async function updateItemStatus(
   revalidatePath('/admin/services/lost-found');
   return { success: true };
 }
+
+export async function getOpenLostFoundItems(): Promise<ServiceActionResult<LostFoundItem[]>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('lost_found_items')
+    .select('*')
+    .eq('status', 'open')
+    .order('created_at', { ascending: false });
+  if (error) return { success: false, error: error.message };
+  return { success: true, data: (data ?? []) as LostFoundItem[] };
+}
+
+export async function resolveLostFound(id: string): Promise<ServiceActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { error } = await supabase
+    .from('lost_found_items')
+    .update({ status: 'resolved', resolved_by: user?.id, resolved_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/services/lost-found');
+  return { success: true };
+}

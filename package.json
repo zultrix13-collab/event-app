@@ -10,7 +10,8 @@
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "validate": "npm run typecheck && npm run lint && npm run test && npm run build"
+    "validate": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "deploy:check": "bash scripts/deploy-check.sh"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",

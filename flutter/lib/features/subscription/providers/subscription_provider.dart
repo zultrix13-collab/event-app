@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:saas_base/core/supabase/supabase_client.dart';
-import 'package:saas_base/features/organization/providers/org_provider.dart';
-import 'package:saas_base/shared/models/subscription.dart';
+import 'package:event_app/core/supabase/supabase_client.dart';
+import 'package:event_app/features/organization/providers/org_provider.dart';
+import 'package:event_app/shared/models/subscription.dart';
 
 // ---------------------------------------------------------------------------
 // Subscription State

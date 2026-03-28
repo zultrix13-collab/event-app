@@ -26,10 +26,11 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     <div className="app-shell">
       <header className="app-shell__header">
         <nav className="app-shell__nav">
-          <span className="app-shell__brand">MarTech</span>
-          <Link href="/dashboard">Dashboard</Link>
-          <Link href="/billing">Billing</Link>
-          <Link href="/pricing">Pricing</Link>
+          <span className="app-shell__brand">Арга хэмжаа</span>
+          <Link href="/app/home">Нүүр</Link>
+          <Link href="/app/programme">Хөтөлбөр</Link>
+          <Link href="/app/map">Газрын зураг</Link>
+          <Link href="/app/services">Үйлчилгээ</Link>
           {showSystemAdminNav ? (
             <Link href="/admin" className="app-shell__nav-link--accent">
               System admin

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// SaaS бүрт domain-specific content-ийг энд нэм
+/// Event app-д domain-specific content-ийг энд нэм
 class PlaceholderContent extends StatelessWidget {
   const PlaceholderContent({super.key});
 
@@ -35,7 +35,7 @@ class PlaceholderContent extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Энд SaaS-ийн үндсэн контентоо нэмнэ үү\n(жишээ: дашбоард, хүснэгт, статистик...)',
+            'Энд арга хэмжааны үндсэн контентоо нэмнэ үү\n(жишээ: хөтөлбөр, мэдэгдэл, статистик...)',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),

@@ -89,7 +89,7 @@ export async function createPaidPlanCheckout(params: {
       senderInvoiceNo,
       receiverCode,
       receiverName: params.organizationName.slice(0, 100),
-      description: `MarTech ${params.target.planName} (${params.target.planCode})`,
+      description: `Event App ${params.target.planName} (${params.target.planCode})`,
       amount: params.target.amount,
       currency: params.target.currency,
       callbackUrl,

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:saas_base/features/auth/providers/auth_provider.dart';
-import 'package:saas_base/shared/widgets/loading_widget.dart';
+import 'package:event_app/features/auth/providers/auth_provider.dart';
+import 'package:event_app/shared/widgets/loading_widget.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -58,11 +58,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Logo / App name — SaaS-д өөрчлөх
-                const Icon(Icons.rocket_launch, size: 64),
+                // Logo / App name
+                const Icon(Icons.event, size: 64),
                 const SizedBox(height: 8),
                 Text(
-                  'SaaS Base',
+                  'Арга хэмжаа',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),

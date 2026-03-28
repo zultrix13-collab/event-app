@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:saas_base/features/organization/providers/org_provider.dart';
-import 'package:saas_base/shared/widgets/loading_widget.dart';
+import 'package:event_app/features/organization/providers/org_provider.dart';
+import 'package:event_app/shared/widgets/loading_widget.dart';
 
 class SetupOrgScreen extends ConsumerStatefulWidget {
   const SetupOrgScreen({super.key});
@@ -75,7 +75,7 @@ class _SetupOrgScreenState extends ConsumerState<SetupOrgScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Таны SaaS workspace болно',
+                  'Таны арга хэмжааны workspace болно',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),

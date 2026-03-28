@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AppTheme {
   AppTheme._();
 
-  static const _primaryColor = Color(0xFF6366F1); // Indigo — SaaS-д тохируулна
+  static const _primaryColor = Color(0xFF6366F1); // Indigo — арга хэмжааны өнгө
   static const _secondaryColor = Color(0xFF8B5CF6);
 
   static ThemeData get lightTheme => ThemeData(
@@ -17,7 +17,7 @@ class AppTheme {
           centerTitle: true,
           elevation: 0,
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -50,7 +50,7 @@ class AppTheme {
           centerTitle: true,
           elevation: 0,
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

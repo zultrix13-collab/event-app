@@ -2,8 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — MarTech",
-  description: "How MarTech collects, uses, and protects your data."
+  title: "Privacy Policy — Event App",
+  description: "How Event App collects, uses, and protects your data."
 };
 
 export default function PrivacyPolicyPage() {
@@ -23,8 +23,8 @@ export default function PrivacyPolicyPage() {
       <p style={{ color: "#64748b" }}>Last updated: {updated}</p>
 
       <p>
-        MarTech (&quot;we&quot;, &quot;us&quot;, or &quot;the Service&quot;) is a social media analytics platform operated
-        by MarTech Mongolia. This Privacy Policy explains how we collect, use, store, and share your information when you
+        Event App (&quot;we&quot;, &quot;us&quot;, or &quot;the Service&quot;) is a social media analytics platform operated
+        by Event App Mongolia. This Privacy Policy explains how we collect, use, store, and share your information when you
         use our Service.
       </p>
 
@@ -133,7 +133,7 @@ export default function PrivacyPolicyPage() {
       <h2>10. Contact Us</h2>
       <p>
         If you have questions about this Privacy Policy or your data, contact us at:{" "}
-        <a href="mailto:support@martech.mn">support@martech.mn</a>
+        <a href="mailto:support@eventapp.mn">support@eventapp.mn</a>
       </p>
 
       <footer style={{ marginTop: "3rem", paddingTop: "1rem", borderTop: "1px solid #e2e8f0", fontSize: "0.85rem", color: "#64748b" }}>

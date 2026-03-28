@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { checkInAtZone } from '@/modules/map/actions';
@@ -24,7 +24,7 @@ const ZONE_TYPE_ICONS: Record<string, string> = {
   room: '🏠',
 };
 
-export default function QRCheckinPage() {
+function QRCheckinContent() {
   const searchParams = useSearchParams();
   const qrCode = searchParams.get('qr');
 
@@ -131,4 +131,17 @@ export default function QRCheckinPage() {
   }
 
   return null;
+}
+
+export default function QRCheckinPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-md mx-auto p-6 text-center mt-20">
+        <div className="text-5xl mb-4 animate-pulse">📍</div>
+        <p className="text-slate-500">Ачааллаж байна...</p>
+      </div>
+    }>
+      <QRCheckinContent />
+    </Suspense>
+  );
 }

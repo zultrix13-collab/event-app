@@ -2,18 +2,29 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { topupWallet, checkQPayStatus } from '@/modules/services/actions';
+import { createSocialPayTopup } from '@/modules/payment/wallet';
 import type { QPayInvoice } from '@/modules/services/types';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 const PRESET_AMOUNTS = [10_000, 20_000, 50_000];
 
+type PaymentMethod = 'qpay' | 'socialpay';
+
+interface SocialPayResult {
+  invoiceId: string;
+  paymentUrl: string;
+  qrCode?: string;
+}
+
 export default function TopupPage() {
   const router = useRouter();
   const [amount, setAmount] = useState<number | ''>('');
   const [customAmount, setCustomAmount] = useState('');
   const [step, setStep] = useState<'select' | 'qr' | 'success'>('select');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('qpay');
   const [invoice, setInvoice] = useState<QPayInvoice | null>(null);
+  const [socialPayResult, setSocialPayResult] = useState<SocialPayResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [pollStatus, setPollStatus] = useState('Төлбөр хүлээж байна...');
@@ -30,15 +41,29 @@ export default function TopupPage() {
     setError('');
     setLoading(true);
 
-    const result = await topupWallet(finalAmount);
-    setLoading(false);
-
-    if (result.success && result.data) {
-      setInvoice(result.data);
-      setStep('qr');
-      startPolling(result.data.invoice_id!);
+    if (paymentMethod === 'qpay') {
+      const result = await topupWallet(finalAmount);
+      setLoading(false);
+      if (result.success && result.data) {
+        setInvoice(result.data);
+        setStep('qr');
+        startPolling(result.data.invoice_id!);
+      } else {
+        setError(result.error ?? 'Алдаа гарлаа. Дахин оролдоно уу.');
+      }
     } else {
-      setError(result.error ?? 'Алдаа гарлаа. Дахин оролдоно уу.');
+      const result = await createSocialPayTopup(finalAmount);
+      setLoading(false);
+      if (result.success && result.invoiceId) {
+        setSocialPayResult({
+          invoiceId: result.invoiceId,
+          paymentUrl: result.paymentUrl!,
+          qrCode: result.qrCode,
+        });
+        setStep('qr');
+      } else {
+        setError(result.error ?? 'SocialPay алдаа гарлаа. Дахин оролдоно уу.');
+      }
     }
   };
 
@@ -74,6 +99,13 @@ export default function TopupPage() {
     };
   }, []);
 
+  const handleBack = () => {
+    setStep('select');
+    setSocialPayResult(null);
+    setInvoice(null);
+    if (pollRef.current) clearInterval(pollRef.current);
+  };
+
   if (step === 'success') {
     return (
       <div className="max-w-md mx-auto p-6 text-center">
@@ -87,11 +119,12 @@ export default function TopupPage() {
     );
   }
 
-  if (step === 'qr' && invoice) {
+  // QPay QR step
+  if (step === 'qr' && paymentMethod === 'qpay' && invoice) {
     return (
       <div className="max-w-md mx-auto p-4">
         <div className="flex items-center gap-3 mb-4">
-          <button onClick={() => { setStep('select'); if (pollRef.current) clearInterval(pollRef.current); }} className="text-blue-600 text-sm">← Буцах</button>
+          <button onClick={handleBack} className="text-blue-600 text-sm">← Буцах</button>
           <h1 className="text-xl font-bold text-gray-900">QPay төлбөр</h1>
         </div>
 
@@ -122,8 +155,64 @@ export default function TopupPage() {
           </div>
 
           <p className="text-xs text-gray-300 mt-2">
-            Дуусах хугацаа: {invoice.expires_at ? new Date(invoice.expires_at).toLocaleTimeString('mn-MN', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+            Дуусах хугацаа:{' '}
+            {invoice.expires_at
+              ? new Date(invoice.expires_at).toLocaleTimeString('mn-MN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : '--:--'}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // SocialPay QR step
+  if (step === 'qr' && paymentMethod === 'socialpay' && socialPayResult) {
+    return (
+      <div className="max-w-md mx-auto p-4">
+        <div className="flex items-center gap-3 mb-4">
+          <button onClick={handleBack} className="text-green-600 text-sm">← Буцах</button>
+          <h1 className="text-xl font-bold text-gray-900">SocialPay төлбөр</h1>
+        </div>
+
+        <div className="bg-white rounded-2xl border p-6 text-center">
+          <p className="text-sm text-gray-500 mb-1">Цэнэглэх дүн</p>
+          <p className="text-3xl font-bold text-green-600 mb-4">₮{finalAmount.toLocaleString()}</p>
+
+          {socialPayResult.qrCode ? (
+            <div className="mb-4">
+              <div className="bg-gray-50 rounded-xl p-3 mx-auto mb-3 max-w-xs">
+                <p className="text-xs font-mono text-gray-600 break-all leading-relaxed">
+                  {socialPayResult.qrCode}
+                </p>
+              </div>
+              <p className="text-sm text-gray-500">SocialPay аппаар QR уншуулна уу</p>
+            </div>
+          ) : (
+            <div className="mb-4 text-sm text-gray-400">QR мэдээлэл байхгүй байна</div>
+          )}
+
+          <a
+            href={socialPayResult.paymentUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full py-3 bg-green-600 text-white rounded-xl font-bold text-base hover:bg-green-700 transition-colors mt-2"
+          >
+            🟢 SocialPay-аар төлөх
+          </a>
+
+          <p className="text-xs text-gray-400 mt-3">
+            Шинэ таб нээгдэж SocialPay төлбөрийн хуудас руу шилжинэ
+          </p>
+
+          <button
+            onClick={() => { setStep('success'); }}
+            className="mt-4 text-sm text-green-600 underline"
+          >
+            Төлбөр хийсэн — баталгаажуулах
+          </button>
         </div>
       </div>
     );
@@ -172,18 +261,31 @@ export default function TopupPage() {
         </div>
       </div>
 
-      {/* Payment method */}
+      {/* Payment method toggle */}
       <div className="mb-6">
         <p className="text-sm font-medium text-gray-700 mb-2">Төлбөрийн арга</p>
         <div className="grid grid-cols-2 gap-2">
-          <button className="py-3 rounded-xl border-2 border-blue-500 bg-blue-50 text-blue-700 font-semibold text-sm flex flex-col items-center gap-1">
-            <span className="text-2xl">📱</span>
+          <button
+            onClick={() => setPaymentMethod('qpay')}
+            className={`py-3 rounded-xl border-2 font-semibold text-sm flex flex-col items-center gap-1 transition-colors ${
+              paymentMethod === 'qpay'
+                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                : 'border-gray-200 hover:border-gray-300 text-gray-600'
+            }`}
+          >
+            <span className="text-2xl">🔵</span>
             QPay
           </button>
-          <button disabled className="py-3 rounded-xl border border-gray-200 text-gray-300 font-semibold text-sm flex flex-col items-center gap-1">
-            <span className="text-2xl">💳</span>
+          <button
+            onClick={() => setPaymentMethod('socialpay')}
+            className={`py-3 rounded-xl border-2 font-semibold text-sm flex flex-col items-center gap-1 transition-colors ${
+              paymentMethod === 'socialpay'
+                ? 'border-green-500 bg-green-50 text-green-700'
+                : 'border-gray-200 hover:border-gray-300 text-gray-600'
+            }`}
+          >
+            <span className="text-2xl">🟢</span>
             SocialPay
-            <span className="text-xs">(удахгүй)</span>
           </button>
         </div>
       </div>
@@ -197,7 +299,11 @@ export default function TopupPage() {
       <button
         onClick={handleStart}
         disabled={loading || !finalAmount}
-        className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-base hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        className={`w-full py-4 text-white rounded-2xl font-bold text-base disabled:opacity-50 transition-colors ${
+          paymentMethod === 'socialpay'
+            ? 'bg-green-600 hover:bg-green-700'
+            : 'bg-blue-600 hover:bg-blue-700'
+        }`}
       >
         {loading
           ? 'Боловсруулж байна...'

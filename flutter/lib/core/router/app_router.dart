@@ -1,14 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:saas_base/features/auth/providers/auth_provider.dart';
-import 'package:saas_base/features/auth/screens/login_screen.dart';
-import 'package:saas_base/features/auth/screens/verify_screen.dart';
-import 'package:saas_base/features/home/screens/home_screen.dart';
-import 'package:saas_base/features/organization/providers/org_provider.dart';
-import 'package:saas_base/features/organization/screens/org_screen.dart';
-import 'package:saas_base/features/organization/screens/setup_org_screen.dart';
-import 'package:saas_base/features/subscription/screens/subscription_screen.dart';
+import 'package:event_app/core/shell/app_shell.dart';
+import 'package:event_app/features/auth/providers/auth_provider.dart';
+import 'package:event_app/features/auth/screens/apply_vip_screen.dart';
+import 'package:event_app/features/auth/screens/login_screen.dart';
+import 'package:event_app/features/auth/screens/pending_approval_screen.dart';
+import 'package:event_app/features/auth/screens/verify_screen.dart';
+import 'package:event_app/features/green/screens/green_screen.dart';
+import 'package:event_app/features/home/screens/home_screen.dart';
+import 'package:event_app/features/map/screens/map_screen.dart';
+import 'package:event_app/features/map/screens/offline_map_screen.dart';
+import 'package:event_app/features/map/screens/qr_scanner_screen.dart';
+import 'package:event_app/features/notifications/screens/notifications_screen.dart';
+import 'package:event_app/features/profile/screens/profile_screen.dart';
+import 'package:event_app/features/programme/screens/checkin_screen.dart';
+import 'package:event_app/features/programme/screens/programme_screen.dart';
+import 'package:event_app/features/programme/screens/session_detail_screen.dart';
+import 'package:event_app/features/services/screens/cart_screen.dart';
+import 'package:event_app/features/services/screens/hotel_screen.dart';
+import 'package:event_app/features/services/screens/lost_found_screen.dart';
+import 'package:event_app/features/chat/screens/chat_screen.dart';
+import 'package:event_app/features/services/screens/restaurant_screen.dart';
+import 'package:event_app/features/services/screens/services_screen.dart';
+import 'package:event_app/features/services/screens/shop_screen.dart';
+import 'package:event_app/features/services/screens/topup_screen.dart';
+import 'package:event_app/features/services/screens/transport_screen.dart';
+import 'package:event_app/features/services/screens/wallet_screen.dart';
+import 'package:event_app/features/profile/screens/settings_screen.dart';
+
+// Auth routes that live OUTSIDE the shell
+const _authRoutes = {'/login', '/verify', '/setup-org', '/pending-approval', '/apply-vip'};
 
 // ---------------------------------------------------------------------------
 // Router Provider
@@ -16,15 +38,14 @@ import 'package:saas_base/features/subscription/screens/subscription_screen.dart
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
-  final orgState = ref.watch(orgProvider);
 
   return GoRouter(
     initialLocation: '/login',
     redirect: (context, state) {
       final isLoggedIn = authState.isAuthenticated;
       final isLoading = authState.status == AuthStatus.loading;
-      final isAuthRoute = state.matchedLocation == '/login' ||
-          state.matchedLocation == '/verify';
+      final currentPath = state.matchedLocation;
+      final isAuthRoute = _authRoutes.contains(currentPath);
 
       // Loading үед redirect хийхгүй
       if (isLoading) return null;
@@ -32,24 +53,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Нэвтрээгүй бол login руу
       if (!isLoggedIn && !isAuthRoute) return '/login';
 
-      // Нэвтэрсэн бол auth route-аас гарах
-      if (isLoggedIn && isAuthRoute) {
-        // Org байхгүй бол setup руу
-        if (!orgState.isLoading && !orgState.hasOrg) return '/setup-org';
-        return '/home';
+      // Нэвтэрсэн, баталгаажаагүй → pending-approval
+      if (isLoggedIn && authState.needsApproval) {
+        if (currentPath != '/pending-approval') return '/pending-approval';
+        return null;
       }
 
-      // Нэвтэрсэн, org байхгүй
-      if (isLoggedIn &&
-          !orgState.isLoading &&
-          !orgState.hasOrg &&
-          state.matchedLocation != '/setup-org') {
-        return '/setup-org';
+      // Нэвтэрсэн бол auth route-аас гарах
+      if (isLoggedIn && (currentPath == '/login' || currentPath == '/verify')) {
+        return '/home';
       }
 
       return null;
     },
     routes: [
+      // -----------------------------------------------------------------------
+      // Auth routes (outside shell)
+      // -----------------------------------------------------------------------
       GoRoute(
         path: '/login',
         builder: (_, __) => const LoginScreen(),
@@ -63,19 +83,140 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/setup-org',
-        builder: (_, __) => const SetupOrgScreen(),
+        builder: (_, __) => const _SetupOrgPlaceholder(),
       ),
       GoRoute(
-        path: '/home',
-        builder: (_, __) => const HomeScreen(),
+        path: '/pending-approval',
+        builder: (_, __) => const PendingApprovalScreen(),
       ),
       GoRoute(
-        path: '/org',
-        builder: (_, __) => const OrgScreen(),
+        path: '/apply-vip',
+        builder: (_, __) => const ApplyVipScreen(),
       ),
       GoRoute(
-        path: '/subscription',
-        builder: (_, __) => const SubscriptionScreen(),
+        path: '/green',
+        builder: (_, __) => const GreenScreen(),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (_, __) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: '/chat',
+        builder: (_, __) => const ChatScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (_, __) => const SettingsScreen(),
+      ),
+
+      // -----------------------------------------------------------------------
+      // Shell routes (with bottom nav)
+      // -----------------------------------------------------------------------
+      StatefulShellRoute.indexedStack(
+        builder: (_, __, navigationShell) =>
+            AppShell(navigationShell: navigationShell),
+        branches: [
+          // 🏠 Home
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/home',
+              builder: (_, __) => const HomeScreen(),
+            ),
+          ]),
+
+          // 📅 Programme
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/programme',
+              builder: (_, __) => const ProgrammeScreen(),
+              routes: [
+                GoRoute(
+                  path: 'checkin/:sessionId',
+                  builder: (_, state) => CheckinScreen(
+                    sessionId: state.pathParameters['sessionId']!,
+                  ),
+                ),
+                GoRoute(
+                  path: ':id',
+                  builder: (_, state) => SessionDetailScreen(
+                    sessionId: state.pathParameters['id']!,
+                  ),
+                ),
+              ],
+            ),
+          ]),
+
+          // 🗺️ Map
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/map',
+              builder: (_, __) => const MapScreen(),
+              routes: [
+                GoRoute(
+                  path: 'qr-scan',
+                  builder: (_, __) => const QrScannerScreen(),
+                ),
+                GoRoute(
+                  path: 'offline',
+                  builder: (_, __) => const OfflineMapScreen(),
+                ),
+              ],
+            ),
+          ]),
+
+          // 🛍️ Services
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/services',
+              builder: (_, __) => const ServicesScreen(),
+              routes: [
+                GoRoute(
+                  path: 'shop',
+                  builder: (_, __) => const ShopScreen(),
+                ),
+                GoRoute(
+                  path: 'cart',
+                  builder: (_, __) => const CartScreen(),
+                ),
+                GoRoute(
+                  path: 'wallet',
+                  builder: (_, __) => const WalletScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'topup',
+                      builder: (_, __) => const TopUpScreen(),
+                    ),
+                  ],
+                ),
+                GoRoute(
+                  path: 'transport',
+                  builder: (_, __) => const TransportScreen(),
+                ),
+                GoRoute(
+                  path: 'restaurant',
+                  builder: (_, __) => const RestaurantScreen(),
+                ),
+                GoRoute(
+                  path: 'hotel',
+                  builder: (_, __) => const HotelScreen(),
+                ),
+                GoRoute(
+                  path: 'lost-found',
+                  builder: (_, __) => const LostFoundScreen(),
+                ),
+              ],
+            ),
+          ]),
+
+          // 👤 Profile
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/profile',
+              builder: (_, __) => const ProfileScreen(),
+            ),
+          ]),
+        ],
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
@@ -96,3 +237,19 @@ final routerProvider = Provider<GoRouter>((ref) {
     ),
   );
 });
+
+// ---------------------------------------------------------------------------
+// Temporary placeholder for /setup-org (kept for router completeness)
+// ---------------------------------------------------------------------------
+
+class _SetupOrgPlaceholder extends StatelessWidget {
+  const _SetupOrgPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Байгууллага тохируулах')),
+      body: const Center(child: Text('Setup org — удахгүй')),
+    );
+  }
+}

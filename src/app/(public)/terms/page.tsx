@@ -2,8 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — MarTech",
-  description: "Terms and conditions for using the MarTech platform."
+  title: "Terms of Service — Event App",
+  description: "Terms and conditions for using the Event App platform."
 };
 
 export default function TermsOfServicePage() {
@@ -23,8 +23,8 @@ export default function TermsOfServicePage() {
       <p style={{ color: "#64748b" }}>Last updated: {updated}</p>
 
       <p>
-        These Terms of Service (&quot;Terms&quot;) govern your use of the MarTech platform (&quot;Service&quot;)
-        operated by MarTech Mongolia (&quot;we&quot;, &quot;us&quot;). By accessing or using the Service, you agree to
+        These Terms of Service (&quot;Terms&quot;) govern your use of the Event App platform (&quot;Service&quot;)
+        operated by Event App Mongolia (&quot;we&quot;, &quot;us&quot;). By accessing or using the Service, you agree to
         be bound by these Terms.
       </p>
 
@@ -118,7 +118,7 @@ export default function TermsOfServicePage() {
 
       <h2>11. Limitation of Liability</h2>
       <p>
-        To the maximum extent permitted by law, MarTech Mongolia shall not be liable for any indirect, incidental,
+        To the maximum extent permitted by law, Event App Mongolia shall not be liable for any indirect, incidental,
         special, consequential, or punitive damages, including loss of profits, data, or business opportunities,
         arising from your use of the Service.
       </p>
@@ -145,7 +145,7 @@ export default function TermsOfServicePage() {
       <h2>15. Contact</h2>
       <p>
         For questions about these Terms, contact us at:{" "}
-        <a href="mailto:support@martech.mn">support@martech.mn</a>
+        <a href="mailto:support@eventapp.mn">support@eventapp.mn</a>
       </p>
 
       <footer style={{ marginTop: "3rem", paddingTop: "1rem", borderTop: "1px solid #e2e8f0", fontSize: "0.85rem", color: "#64748b" }}>

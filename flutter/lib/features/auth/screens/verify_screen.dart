@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:saas_base/features/auth/providers/auth_provider.dart';
-import 'package:saas_base/shared/widgets/loading_widget.dart';
+import 'package:event_app/features/auth/providers/auth_provider.dart';
+import 'package:event_app/shared/widgets/loading_widget.dart';
 
 class VerifyScreen extends ConsumerStatefulWidget {
   const VerifyScreen({super.key, required this.email});

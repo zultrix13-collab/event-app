@@ -23,3 +23,11 @@ export function getSupabaseEnv() {
  *     };
  *   }
  */
+
+export function getSocialPayEnv() {
+  return {
+    baseUrl: process.env.SOCIALPAY_BASE_URL ?? 'https://sandbox.socialpay.mn',
+    token: process.env.SOCIALPAY_TOKEN ?? '',
+    merchantId: process.env.SOCIALPAY_MERCHANT_ID ?? '',
+  };
+}

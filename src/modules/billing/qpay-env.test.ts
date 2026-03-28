@@ -43,20 +43,20 @@ describe("getAppBaseUrl", () => {
   });
 
   it("returns NEXT_PUBLIC_APP_URL when set", () => {
-    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://martech.mn");
-    vi.stubEnv("VERCEL_URL", "martech-olive.vercel.app");
-    expect(getAppBaseUrl()).toBe("https://martech.mn");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://eventapp.mn");
+    vi.stubEnv("VERCEL_URL", "eventapp-olive.vercel.app");
+    expect(getAppBaseUrl()).toBe("https://eventapp.mn");
   });
 
   it("strips trailing slash from NEXT_PUBLIC_APP_URL", () => {
-    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://martech.mn/");
-    expect(getAppBaseUrl()).toBe("https://martech.mn");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://eventapp.mn/");
+    expect(getAppBaseUrl()).toBe("https://eventapp.mn");
   });
 
   it("falls back to VERCEL_URL with https prefix", () => {
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "");
-    vi.stubEnv("VERCEL_URL", "martech-olive.vercel.app");
-    expect(getAppBaseUrl()).toBe("https://martech-olive.vercel.app");
+    vi.stubEnv("VERCEL_URL", "eventapp-olive.vercel.app");
+    expect(getAppBaseUrl()).toBe("https://eventapp-olive.vercel.app");
   });
 
   it("defaults to localhost when no env is set", () => {

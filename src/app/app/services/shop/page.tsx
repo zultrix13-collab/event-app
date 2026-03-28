@@ -21,7 +21,7 @@ export default function ShopPage() {
   const [cartOpen, setCartOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'qpay'>('wallet');
   const [checkoutStep, setCheckoutStep] = useState<'browse' | 'checkout' | 'confirmed'>('browse');
-  const [orderResult, setOrderResult] = useState<string | null>(null);
+  const [_orderResult, setOrderResult] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const fetchProducts = useCallback(async () => {

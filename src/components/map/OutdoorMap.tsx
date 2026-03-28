@@ -27,7 +27,7 @@ export default function OutdoorMap({ pois }: { pois: MapPOI[] }) {
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const [selectedPOI, setSelectedPOI] = useState<MapPOI | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>('all');
-  const [mapLoaded, setMapLoaded] = useState(false);
+  const [_mapLoaded, setMapLoaded] = useState(false);
 
   const token = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY;
 

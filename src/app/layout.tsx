@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import ChatWidget from '@/components/chat/ChatWidget';
 
 export const metadata: Metadata = {
-  title: "MarTech MVP",
-  description: "Scaffold for MarTech MVP v1"
+  title: "Event App",
+  description: "Event management platform"
 };
 
 type RootLayoutProps = {

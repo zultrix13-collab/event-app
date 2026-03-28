@@ -78,7 +78,7 @@ export default async function PricingPage() {
         title="Төлөвлөгөө ба төлбөр"
         description={
           <>
-            MarTech-ийн төлөвлөгөөнүүд нь хэдэн page холбох, өдөрт хэдэн sync хийх, сар бүр хэдэн AI тайлан авахыг
+            Event App-ийн төлөвлөгөөнүүд нь хэдэн page холбох, өдөрт хэдэн sync хийх, сар бүр хэдэн AI тайлан авахыг
             тодорхойлно. Төлбөртэй төлөвлөгөөний төлбөрийг <strong>QPay</strong>-аар хийж, төлбөр баталгаажсаны дараа
             subscription идэвхжинэ.
           </>
@@ -91,7 +91,7 @@ export default async function PricingPage() {
           <ol style={{ margin: 0, paddingLeft: "1.2rem", display: "grid", gap: "var(--space-2)" }}>
             <li>Өөрт тохирох төлөвлөгөөгөө сонгоно.</li>
             <li>Төлбөртэй төлөвлөгөө бол QPay нэхэмжлэл үүсгээд төлнө.</li>
-            <li>MarTech төлбөр баталгаажсаны дараа subscription-ийг идэвхжүүлнэ.</li>
+            <li>Event App төлбөр баталгаажсаны дараа subscription-ийг идэвхжүүлнэ.</li>
           </ol>
           <p className="ui-text-muted" style={{ margin: 0 }}>
             Төлбөрийн явц, нэхэмжлэл, баталгаажуулалтын төлөвийг <Link href="/billing">Billing</Link> хэсгээс харж

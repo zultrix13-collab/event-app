@@ -1,8 +1,11 @@
 /**
  * Wallet helpers — call Supabase RPC functions for ACID wallet operations.
  */
+'use server';
+
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { createSocialPayInvoice } from '@/modules/payment/socialpay';
 
 function getAdminClient() {
   return createAdminClient(
@@ -118,4 +121,68 @@ export async function getWalletTransactions(walletId: string, limit = 20) {
     .limit(limit);
 
   return data ?? [];
+}
+
+export async function createSocialPayTopup(amount: number): Promise<{
+  success: boolean;
+  invoiceId?: string;
+  paymentUrl?: string;
+  qrCode?: string;
+  error?: string;
+}> {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { success: false, error: 'Нэвтэрч орно уу' };
+  }
+
+  if (!amount || amount < 1000) {
+    return { success: false, error: 'Хамгийн багадаа ₮1,000 оруулна уу' };
+  }
+
+  const admin = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const externalId = `topup-${user.id.slice(0, 8)}-${Date.now()}`;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+
+  const result = await createSocialPayInvoice({
+    amount,
+    description: `Хэтэвч цэнэглэлт ₮${amount.toLocaleString()}`,
+    externalId,
+    returnUrl: `${appUrl}/app/wallet/topup?status=paid`,
+  });
+
+  if (!result.success || !result.data) {
+    return { success: false, error: result.error ?? 'SocialPay invoice үүсгэхэд алдаа гарлаа' };
+  }
+
+  const invoice = result.data;
+
+  // Persist to DB (best-effort — don't fail if insert errors)
+  await admin
+    .from('socialpay_invoices')
+    .insert({
+      user_id: user.id,
+      order_id: null,
+      invoice_id: invoice.invoiceId,
+      amount,
+      description: invoice.description,
+      external_id: externalId,
+      payment_url: invoice.paymentUrl,
+      qr_code: invoice.qrCode ?? null,
+      status: 'pending',
+      expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+    })
+    .single();
+
+  return {
+    success: true,
+    invoiceId: invoice.invoiceId,
+    paymentUrl: invoice.paymentUrl,
+    qrCode: invoice.qrCode,
+  };
 }
