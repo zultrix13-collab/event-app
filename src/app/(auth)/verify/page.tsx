@@ -10,7 +10,7 @@ function VerifyForm() {
   const email = searchParams.get('email') ?? '';
   const router = useRouter();
 
-  const [digits, setDigits] = useState<string[]>(Array(6).fill(''));
+  const [digits, setDigits] = useState<string[]>(Array(7).fill(''));
   const [error, setError] = useState('');
   const [isPending, startTransition] = useTransition();
   const [resendCountdown, setResendCountdown] = useState(60);
@@ -40,13 +40,13 @@ function VerifyForm() {
     const newDigits = [...digits];
     newDigits[index] = cleaned;
     setDigits(newDigits);
-    if (cleaned && index < 5) {
+    if (cleaned && index < 6) {
       inputRefs.current[index + 1]?.focus();
     }
     // Auto-submit when all filled
-    if (cleaned && index === 5) {
-      const code = [...newDigits.slice(0, 5), cleaned].join('');
-      if (code.length === 6) handleVerify(code);
+    if (cleaned && index === 6) {
+      const code = [...newDigits.slice(0, 6), cleaned].join('');
+      if (code.length === 7) handleVerify(code);
     }
   }
 
@@ -58,8 +58,8 @@ function VerifyForm() {
 
   function handlePaste(e: React.ClipboardEvent) {
     e.preventDefault();
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    if (pasted.length === 6) {
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 7);
+    if (pasted.length === 7) {
       setDigits(pasted.split(''));
       handleVerify(pasted);
     }
@@ -73,7 +73,7 @@ function VerifyForm() {
         router.push(result.redirectUrl);
       } else {
         setError(result.error ?? 'Алдаа гарлаа.');
-        setDigits(Array(6).fill(''));
+        setDigits(Array(7).fill(''));
         inputRefs.current[0]?.focus();
       }
     });
@@ -85,7 +85,7 @@ function VerifyForm() {
       await signInWithOTP(email);
       setResendCountdown(60);
       setTotalCountdown(300);
-      setDigits(Array(6).fill(''));
+      setDigits(Array(7).fill(''));
       setError('');
       inputRefs.current[0]?.focus();
     });
@@ -98,7 +98,7 @@ function VerifyForm() {
           <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📩</div>
           <h1 style={{ fontSize: '1.375rem', fontWeight: 700, margin: 0 }}>Кодоо оруулна уу</h1>
           <p style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '0.5rem' }}>
-            <strong>{email}</strong> хаяг руу 6 оронтой код илгээлээ.
+            <strong>{email}</strong> хаяг руу 7 оронтой код илгээлээ.
           </p>
         </div>
 
@@ -123,7 +123,7 @@ function VerifyForm() {
                 <span style={{ color: '#64748b', fontSize: '0.75rem', marginLeft: '0.5rem' }}>үлдсэн</span>
               </div>
 
-              {/* 6-digit inputs */}
+              {/* 7-digit inputs */}
               <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginBottom: '1.25rem' }} onPaste={handlePaste}>
                 {digits.map((d, i) => (
                   <input
@@ -157,8 +157,8 @@ function VerifyForm() {
 
               <button
                 onClick={() => handleVerify(digits.join(''))}
-                disabled={isPending || digits.join('').length < 6}
-                style={{ width: '100%', padding: '0.75rem', background: 'var(--color-accent, #4f46e5)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 600, fontSize: '0.875rem', cursor: (isPending || digits.join('').length < 6) ? 'not-allowed' : 'pointer', opacity: (isPending || digits.join('').length < 6) ? 0.6 : 1 }}
+                disabled={isPending || digits.join('').length < 7}
+                style={{ width: '100%', padding: '0.75rem', background: 'var(--color-accent, #4f46e5)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 600, fontSize: '0.875rem', cursor: (isPending || digits.join('').length < 7) ? 'not-allowed' : 'pointer', opacity: (isPending || digits.join('').length < 7) ? 0.6 : 1 }}
               >
                 {isPending ? 'Шалгаж байна...' : 'Баталгаажуулах'}
               </button>
