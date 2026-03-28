@@ -34,11 +34,9 @@ export default function OutdoorMap({ pois }: { pois: MapPOI[] }) {
   useEffect(() => {
     if (!mapContainer.current || mapRef.current || !token) return;
 
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${token}&libraries=marker&v=beta`;
-    script.async = true;
-    script.onload = () => {
-      const map = new window.google.maps.Map(mapContainer.current!, {
+    function initMap() {
+      if (!mapContainer.current) return;
+      const map = new window.google.maps.Map(mapContainer.current, {
         center: { lat: 47.9077, lng: 106.9177 },
         zoom: 13,
         mapId: 'event-app-map',
@@ -48,7 +46,6 @@ export default function OutdoorMap({ pois }: { pois: MapPOI[] }) {
       });
       mapRef.current = map;
 
-      // Add markers
       pois.forEach((poi) => {
         const el = document.createElement('div');
         el.className = 'text-2xl cursor-pointer select-none';
@@ -67,7 +64,23 @@ export default function OutdoorMap({ pois }: { pois: MapPOI[] }) {
       });
 
       setMapLoaded(true);
-    };
+    }
+
+    // Avoid loading Google Maps script multiple times
+    const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+    if (existingScript) {
+      if (window.google?.maps) {
+        initMap();
+      } else {
+        existingScript.addEventListener('load', initMap);
+      }
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${token}&libraries=marker&v=beta`;
+    script.async = true;
+    script.onload = initMap;
     document.head.appendChild(script);
   }, [pois, token]);
 
