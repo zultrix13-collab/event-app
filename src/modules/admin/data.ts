@@ -23,6 +23,7 @@ export type OrganizationOpsRow = {
     plan_id: string;
     plans: { code: string; name: string } | null;
   }[];
+  /** Legacy field — integration_connections table does not exist in DB. Always []. */
   integration_connections: {
     status: string;
     last_error: string | null;
@@ -53,6 +54,7 @@ export type SyncJobOpsRow = {
   created_at: string;
   finished_at: string | null;
   organizations: { name: string; slug: string } | null;
+  /** Legacy field — integration_resources table does not exist in DB. Always null. */
   integration_resources: { name: string } | null;
 };
 
@@ -67,6 +69,7 @@ export type AnalysisJobOpsRow = {
   finished_at: string | null;
   source_sync_job_id: string | null;
   organizations: { name: string; slug: string } | null;
+  /** Legacy field — integration_resources table does not exist in DB. Always null. */
   integration_resources: { name: string } | null;
 };
 
@@ -95,8 +98,7 @@ export async function getOrganizationsForOps(limit = 80): Promise<OrganizationOp
     .select(
       `
       id, name, slug, status, created_at,
-      subscriptions ( status, plan_id, plans (code, name) ),
-      integration_connections ( status, last_error, last_validated_at )
+      subscriptions ( status, plan_id, plans (code, name) )
     `
     )
     .order("created_at", { ascending: false })
@@ -108,13 +110,12 @@ export async function getOrganizationsForOps(limit = 80): Promise<OrganizationOp
 
   const rows = (data ?? []) as unknown as (Omit<OrganizationOpsRow, "subscriptions" | "integration_connections"> & {
     subscriptions: OrganizationOpsRow["subscriptions"] | OrganizationOpsRow["subscriptions"][0] | null;
-    integration_connections: OrganizationOpsRow["integration_connections"][0] | OrganizationOpsRow["integration_connections"] | null;
   })[];
 
   return rows.map((row) => ({
     ...row,
     subscriptions: asArray(row.subscriptions),
-    integration_connections: asArray(row.integration_connections)
+    integration_connections: [] // integration_connections table does not exist in DB
   }));
 }
 
@@ -141,9 +142,7 @@ export async function getOrganizationsForAdminList(limit = 500): Promise<Organiz
         `
         id, name, slug, status, created_at,
         subscriptions ( status, plan_id, plans (code, name) ),
-        integration_connections ( status, last_error, last_validated_at ),
-        organization_members ( role, status, profiles ( email ) ),
-        integration_resources ( is_active, status )
+        organization_members ( role, status, profiles ( email ) )
       `
       )
       .order("created_at", { ascending: false })
@@ -158,19 +157,19 @@ export async function getOrganizationsForAdminList(limit = 500): Promise<Organiz
 
   const rows = (raw.data ?? []) as unknown as (Omit<OrganizationOpsRow, "subscriptions" | "integration_connections"> & {
     subscriptions: OrganizationOpsRow["subscriptions"] | OrganizationOpsRow["subscriptions"][0] | null;
-    integration_connections: OrganizationOpsRow["integration_connections"][0] | OrganizationOpsRow["integration_connections"] | null;
     organization_members:
       | { role: string; status: string; profiles: { email: string } | null }[]
       | { role: string; status: string; profiles: { email: string } | null }
       | null;
-    integration_resources: { is_active: boolean; status: string }[] | { is_active: boolean; status: string } | null;
   })[];
 
   return rows.map((row) => {
     const subscriptions = asArray(row.subscriptions);
-    const integration_connections = asArray(row.integration_connections);
+    // integration_connections table does not exist in DB — always empty
+    const integration_connections: OrganizationOpsRow["integration_connections"] = [];
     const members = asArray(row.organization_members);
-    const pages = asArray(row.integration_resources);
+    // integration_resources table does not exist in DB — selected pages always 0
+    const selectedPagesCount = 0;
 
     const owner = members.find((m) => m.role === "owner" && m.status === "active");
     const ownerEmail = owner?.profiles?.email?.trim() ?? null;
@@ -179,13 +178,7 @@ export async function getOrganizationsForAdminList(limit = 500): Promise<Organiz
     const subscriptionStatus = sub?.status ?? null;
     const planLabel = sub?.plans ? `${sub.plans.name} (${sub.plans.code})` : null;
 
-    const selectedPagesCount = pages.filter((p) => p.is_active && p.status === "active").length;
-
-    const metas = integration_connections;
-    const metaConnectionSummary =
-      metas.length === 0
-        ? "No connection"
-        : metas.map((m) => m.status).join(", ") + (metas.some((m) => m.status !== "active") ? " ⚠" : "");
+    const metaConnectionSummary = "No connection"; // integration_connections not in DB
 
     const base: OrganizationOpsRow = {
       id: row.id,
@@ -218,6 +211,7 @@ export type OrganizationAdminDetail = {
       status: string;
       profiles: { id: string; email: string; full_name: string | null } | null;
     }>;
+    /** Legacy field — integration_resources table does not exist in DB. Always []. */
     integration_resources: Array<{
       id: string;
       resource_external_id: string;
@@ -235,6 +229,7 @@ export type OrganizationAdminDetail = {
         current_period_end: string | null;
       })
     | null;
+  /** Legacy field — integration_connections table does not exist in DB. Always []. */
   integrationConnections: OrganizationOpsRow["integration_connections"];
   usageCounters: Array<{
     id: string;
@@ -263,9 +258,7 @@ export async function getOrganizationAdminDetail(organizationId: string): Promis
         status, plan_id, current_period_start, current_period_end, cancel_at_period_end, trial_ends_at,
         plans ( code, name, max_pages, syncs_per_day, monthly_ai_reports, report_retention_days )
       ),
-      integration_connections ( id, status, last_error, last_validated_at, provider_user_id, granted_scopes, token_expires_at, created_at ),
-      organization_members ( role, status, profiles ( id, email, full_name ) ),
-      integration_resources ( id, resource_external_id, name, is_active, status, last_synced_at, category )
+      organization_members ( role, status, profiles ( id, email, full_name ) )
     `
     )
     .eq("id", organizationId)
@@ -283,37 +276,18 @@ export async function getOrganizationAdminDetail(organizationId: string): Promis
     created_at: string;
     updated_at: string;
     subscriptions: OrganizationOpsRow["subscriptions"] | OrganizationOpsRow["subscriptions"][0] | null;
-    integration_connections: OrganizationOpsRow["integration_connections"] | OrganizationOpsRow["integration_connections"][0] | null;
     organization_members:
       | { role: string; status: string; profiles: { id: string; email: string; full_name: string | null } | null }[]
       | { role: string; status: string; profiles: { id: string; email: string; full_name: string | null } | null }
       | null;
-    integration_resources:
-      | Array<{
-          id: string;
-          resource_external_id: string;
-          name: string;
-          is_active: boolean;
-          status: string;
-          last_synced_at: string | null;
-          category: string | null;
-        }>
-      | {
-          id: string;
-          resource_external_id: string;
-          name: string;
-          is_active: boolean;
-          status: string;
-          last_synced_at: string | null;
-          category: string | null;
-        }
-      | null;
   };
 
   const subscriptions = asArray(o.subscriptions);
-  const integration_connections = asArray(o.integration_connections);
+  // integration_connections table does not exist in DB — always empty
+  const integration_connections: OrganizationOpsRow["integration_connections"] = [];
   const organization_members = asArray(o.organization_members);
-  const integration_resources = asArray(o.integration_resources);
+  // integration_resources table does not exist in DB — always empty
+  const integration_resources: OrganizationAdminDetail["organization"]["integration_resources"] = [];
 
   const subFirst = subscriptions[0] as
     | (OrganizationOpsRow["subscriptions"][0] & {
@@ -584,7 +558,6 @@ export type OpsOverviewCounts = {
 
 export async function getOpsOverviewCounts(): Promise<OpsOverviewCounts> {
   const admin = getSupabaseAdminClient();
-  const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const nowIso = new Date().toISOString();
   const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
 
