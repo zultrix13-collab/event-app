@@ -118,28 +118,12 @@ export async function getOrganizationsForOps(limit = 80): Promise<OrganizationOp
   }));
 }
 
-async function getOrgIdsWithFailedJobsSince(params: {
+async function getOrgIdsWithFailedJobsSince(_params: {
   sinceIso: string;
   table: "analysis_jobs";
 }): Promise<Set<string>> {
-  const admin = getSupabaseAdminClient();
-  try {
-    const { data, error } = await admin
-      .from(params.table)
-      .select("organization_id")
-      .eq("status", "failed")
-      .gte("created_at", params.sinceIso);
-
-    if (error) {
-      console.warn(`[admin] getOrgIdsWithFailedJobsSince skipped (${params.table}):`, error.message);
-      return new Set();
-    }
-
-    return new Set((data ?? []).map((r) => r.organization_id as string));
-  } catch (err) {
-    console.warn(`[admin] getOrgIdsWithFailedJobsSince error (${params.table}):`, err);
-    return new Set();
-  }
+  // analysis_jobs table removed — return empty set
+  return new Set<string>();
 }
 
 /**
@@ -385,18 +369,8 @@ export async function getOrganizationAdminDetail(organizationId: string): Promis
     admin.from("usage_counters").select("*").eq("organization_id", organizationId).order("updated_at", { ascending: false }).limit(48),
     // meta_sync_jobs table removed — return empty result
     Promise.resolve({ data: [], error: null }),
-    admin
-      .from("analysis_jobs")
-      .select(
-        `
-        id, organization_id, meta_page_id, status, attempt_count, error_message, created_at, finished_at, source_sync_job_id,
-        organizations ( name, slug ),
-        integration_resources ( name )
-      `
-      )
-      .eq("organization_id", organizationId)
-      .order("created_at", { ascending: false })
-      .limit(15),
+    // analysis_jobs table removed — return empty result
+    Promise.resolve({ data: [], error: null }),
     admin.from("invoices").select("*").eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(15),
     admin.from("payment_transactions").select("*").eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(12),
     admin.from("billing_events").select("*").eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(25),
@@ -442,25 +416,9 @@ export async function getRecentSyncJobsForOps(_limit = 50): Promise<SyncJobOpsRo
   return [];
 }
 
-export async function getRecentAnalysisJobsForOps(limit = 50): Promise<AnalysisJobOpsRow[]> {
-  const admin = getSupabaseAdminClient();
-  const { data, error } = await admin
-    .from("analysis_jobs")
-    .select(
-      `
-      id, organization_id, meta_page_id, status, attempt_count, error_message, created_at, finished_at, source_sync_job_id,
-      organizations ( name, slug ),
-      integration_resources ( name )
-    `
-    )
-    .order("created_at", { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    throw error;
-  }
-
-  return (data ?? []) as AnalysisJobOpsRow[];
+export async function getRecentAnalysisJobsForOps(_limit = 50): Promise<AnalysisJobOpsRow[]> {
+  // analysis_jobs table removed — return empty list
+  return [];
 }
 
 export async function getGlobalRecentInvoicesForOps(limit = 30): Promise<InvoiceWithOrg[]> {
@@ -649,11 +607,8 @@ export async function getOpsOverviewCounts(): Promise<OpsOverviewCounts> {
     admin.from("invoices").select("*", { count: "exact", head: true }).eq("status", "pending").lt("created_at", threeDaysAgo),
     // meta_sync_jobs table removed — always return 0
     Promise.resolve({ count: 0, error: null }),
-    admin
-      .from("analysis_jobs")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "failed")
-      .gte("created_at", dayAgo)
+    // analysis_jobs table removed — always return 0
+    Promise.resolve({ count: 0, error: null })
   ]);
 
   return {
