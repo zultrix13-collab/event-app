@@ -52,9 +52,9 @@ export default async function DashboardPage() {
   // Recent registrations
   const { data: recentActivity } = await supabase
     .from("seat_registrations")
-    .select("id, status, created_at, event_sessions(title)")
+    .select("id, status, registered_at, session_id")
     .eq("status", "confirmed")
-    .order("created_at", { ascending: false })
+    .order("registered_at", { ascending: false })
     .limit(5);
 
   const statCards = [
@@ -158,41 +158,35 @@ export default async function DashboardPage() {
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-            {recentActivity.map((reg) => {
-              const sessions = reg.event_sessions;
-              const sessionTitle = sessions && !Array.isArray(sessions)
-                ? sessions.title
-                : null;
-              return (
-                <div
-                  key={reg.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "var(--space-3)",
-                    borderRadius: "var(--radius-md)",
-                    background: "var(--color-bg-muted)",
-                    gap: "var(--space-3)",
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: "var(--text-sm)", fontWeight: "var(--font-weight-medium)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {sessionTitle ?? "Нэргүй арга хэмжаа"}
-                    </p>
-                    <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--color-text-muted)", marginTop: "2px" }}>
-                      {new Date(reg.created_at).toLocaleString("mn-MN", {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                  <span className="ui-badge ui-badge--green">✓ Бүртгэгдсэн</span>
+            {recentActivity.map((reg) => (
+              <div
+                key={reg.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "var(--space-3)",
+                  borderRadius: "var(--radius-md)",
+                  background: "var(--color-bg-muted)",
+                  gap: "var(--space-3)",
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: "var(--text-sm)", fontWeight: "var(--font-weight-medium)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    Арга хэмжааны бүртгэл #{reg.id.slice(0, 8)}
+                  </p>
+                  <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--color-text-muted)", marginTop: "2px" }}>
+                    {new Date(reg.registered_at).toLocaleString("mn-MN", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
                 </div>
-              );
-            })}
+                <span className="ui-badge ui-badge--green">✓ Баталгаажсан</span>
+              </div>
+            ))}
           </div>
         )}
       </div>
