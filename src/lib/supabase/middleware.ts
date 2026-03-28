@@ -40,9 +40,13 @@ export function isPublicAuthPath(pathname: string): boolean {
 type ProfileRow = { role: string | null; is_approved: boolean | null };
 
 export async function updateSession(request: NextRequest) {
+  // Inject pathname for server components (active nav detection)
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", request.nextUrl.pathname);
+
   let response = NextResponse.next({
     request: {
-      headers: request.headers,
+      headers: requestHeaders,
     },
   });
 
@@ -65,7 +69,7 @@ export async function updateSession(request: NextRequest) {
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
+        response = NextResponse.next({ request: { headers: requestHeaders } });
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options)
         );
