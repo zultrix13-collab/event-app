@@ -120,20 +120,26 @@ export async function getOrganizationsForOps(limit = 80): Promise<OrganizationOp
 
 async function getOrgIdsWithFailedJobsSince(params: {
   sinceIso: string;
-  table: "meta_sync_jobs" | "analysis_jobs";
+  table: "analysis_jobs";
 }): Promise<Set<string>> {
   const admin = getSupabaseAdminClient();
-  const { data, error } = await admin
-    .from(params.table)
-    .select("organization_id")
-    .eq("status", "failed")
-    .gte("created_at", params.sinceIso);
+  try {
+    const { data, error } = await admin
+      .from(params.table)
+      .select("organization_id")
+      .eq("status", "failed")
+      .gte("created_at", params.sinceIso);
 
-  if (error) {
-    throw error;
+    if (error) {
+      console.warn(`[admin] getOrgIdsWithFailedJobsSince skipped (${params.table}):`, error.message);
+      return new Set();
+    }
+
+    return new Set((data ?? []).map((r) => r.organization_id as string));
+  } catch (err) {
+    console.warn(`[admin] getOrgIdsWithFailedJobsSince error (${params.table}):`, err);
+    return new Set();
   }
-
-  return new Set((data ?? []).map((r) => r.organization_id as string));
 }
 
 /**
@@ -158,7 +164,7 @@ export async function getOrganizationsForAdminList(limit = 500): Promise<Organiz
       )
       .order("created_at", { ascending: false })
       .limit(limit),
-    getOrgIdsWithFailedJobsSince({ sinceIso: dayAgo, table: "meta_sync_jobs" }),
+    Promise.resolve(new Set<string>()), // meta_sync_jobs removed (table no longer exists)
     getOrgIdsWithFailedJobsSince({ sinceIso: dayAgo, table: "analysis_jobs" })
   ]);
 
@@ -377,18 +383,8 @@ export async function getOrganizationAdminDetail(organizationId: string): Promis
     auditRes
   ] = await Promise.all([
     admin.from("usage_counters").select("*").eq("organization_id", organizationId).order("updated_at", { ascending: false }).limit(48),
-    admin
-      .from("meta_sync_jobs")
-      .select(
-        `
-        id, organization_id, meta_page_id, job_type, status, attempt_count, error_message, created_at, finished_at,
-        organizations ( name, slug ),
-        integration_resources ( name )
-      `
-      )
-      .eq("organization_id", organizationId)
-      .order("created_at", { ascending: false })
-      .limit(15),
+    // meta_sync_jobs table removed — return empty result
+    Promise.resolve({ data: [], error: null }),
     admin
       .from("analysis_jobs")
       .select(
@@ -441,25 +437,9 @@ export async function getOrganizationAdminDetail(organizationId: string): Promis
   };
 }
 
-export async function getRecentSyncJobsForOps(limit = 50): Promise<SyncJobOpsRow[]> {
-  const admin = getSupabaseAdminClient();
-  const { data, error } = await admin
-    .from("meta_sync_jobs")
-    .select(
-      `
-      id, organization_id, meta_page_id, job_type, status, attempt_count, error_message, created_at, finished_at,
-      organizations ( name, slug ),
-      integration_resources ( name )
-    `
-    )
-    .order("created_at", { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    throw error;
-  }
-
-  return (data ?? []) as SyncJobOpsRow[];
+export async function getRecentSyncJobsForOps(_limit = 50): Promise<SyncJobOpsRow[]> {
+  // meta_sync_jobs table removed — return empty list
+  return [];
 }
 
 export async function getRecentAnalysisJobsForOps(limit = 50): Promise<AnalysisJobOpsRow[]> {
@@ -667,11 +647,8 @@ export async function getOpsOverviewCounts(): Promise<OpsOverviewCounts> {
     admin.from("invoices").select("*", { count: "exact", head: true }).eq("status", "pending"),
     admin.from("invoices").select("*", { count: "exact", head: true }).eq("status", "pending").lt("due_at", nowIso),
     admin.from("invoices").select("*", { count: "exact", head: true }).eq("status", "pending").lt("created_at", threeDaysAgo),
-    admin
-      .from("meta_sync_jobs")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "failed")
-      .gte("created_at", dayAgo),
+    // meta_sync_jobs table removed — always return 0
+    Promise.resolve({ count: 0, error: null }),
     admin
       .from("analysis_jobs")
       .select("id", { count: "exact", head: true })

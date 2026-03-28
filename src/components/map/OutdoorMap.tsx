@@ -2,6 +2,10 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MapPOI } from '@/modules/map/types';
 
+// Module-level singleton: ensures Google Maps script is only injected once
+// across all renders and re-mounts of this component.
+let googleMapsScriptLoaded = false;
+
 const CATEGORY_ICONS: Record<string, string> = {
   venue: '🏛️',
   hotel: '🏨',
@@ -35,7 +39,7 @@ export default function OutdoorMap({ pois }: { pois: MapPOI[] }) {
     if (!mapContainer.current || mapRef.current || !token) return;
 
     function initMap() {
-      if (!mapContainer.current) return;
+      if (!mapContainer.current || mapRef.current) return;
       const map = new window.google.maps.Map(mapContainer.current, {
         center: { lat: 47.9077, lng: 106.9177 },
         zoom: 13,
@@ -66,23 +70,26 @@ export default function OutdoorMap({ pois }: { pois: MapPOI[] }) {
       setMapLoaded(true);
     }
 
-    // Avoid loading Google Maps script multiple times
-    const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
-    if (existingScript) {
+    // Use module-level flag to guarantee the script is only appended once,
+    // even if this effect runs more than once (hot reload, StrictMode, etc.)
+    if (googleMapsScriptLoaded) {
       if (window.google?.maps) {
         initMap();
       } else {
-        existingScript.addEventListener('load', initMap);
+        const existing = document.querySelector('script[src*="maps.googleapis.com"]');
+        existing?.addEventListener('load', initMap);
       }
       return;
     }
 
+    googleMapsScriptLoaded = true;
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${token}&libraries=marker&v=beta`;
     script.async = true;
     script.onload = initMap;
     document.head.appendChild(script);
-  }, [pois, token]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount — pois are captured via closure on first render
 
   const filteredPOIs = activeFilter === 'all'
     ? pois
