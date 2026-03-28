@@ -36,20 +36,16 @@ function VerifyForm() {
   }
 
   function handleChange(value: string) {
-    const cleaned = value.replace(/\D/g, '').slice(0, 8);
+    const cleaned = value.replace(/\D/g, '').slice(0, 10);
     setCode(cleaned);
     setError('');
-    // Auto-submit when 6, 7, or 8 digits entered
-    if (cleaned.length >= 6) {
-      handleVerify(cleaned);
-    }
   }
 
-  function handleVerify(token: string) {
-    if (!token || token.length < 6) return;
+  function handleVerify() {
+    if (!code || code.length < 4) return;
     setError('');
     startTransition(async () => {
-      const result = await verifyOTP(email, token);
+      const result = await verifyOTP(email, code);
       if (result.success && result.redirectUrl) {
         router.push(result.redirectUrl);
       } else {
@@ -58,6 +54,10 @@ function VerifyForm() {
         inputRef.current?.focus();
       }
     });
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter') handleVerify();
   }
 
   function handleResend() {
@@ -106,21 +106,21 @@ function VerifyForm() {
                 inputMode="numeric"
                 value={code}
                 onChange={(e) => handleChange(e.target.value)}
-                placeholder="Код оруулах"
+                onKeyDown={handleKeyDown}
+                placeholder="Мэйлээр ирсэн кодоо оруулна уу"
                 disabled={isPending}
                 style={{
                   width: '100%',
                   padding: '0.875rem 1rem',
-                  fontSize: '1.5rem',
+                  fontSize: '1.25rem',
                   fontWeight: 700,
-                  letterSpacing: '0.25em',
+                  letterSpacing: '0.2em',
                   textAlign: 'center',
                   border: '2px solid',
-                  borderColor: error ? '#fca5a5' : code.length >= 6 ? 'var(--color-accent, #4f46e5)' : '#e2e8f0',
+                  borderColor: error ? '#fca5a5' : '#e2e8f0',
                   borderRadius: 10,
                   outline: 'none',
                   boxSizing: 'border-box',
-                  background: isPending ? '#f8fafc' : '#fff',
                 }}
               />
 
@@ -130,11 +130,27 @@ function VerifyForm() {
                 </div>
               )}
 
-              {isPending && (
-                <p style={{ textAlign: 'center', color: '#64748b', fontSize: '0.875rem', marginTop: '0.75rem' }}>Шалгаж байна...</p>
-              )}
+              <button
+                onClick={handleVerify}
+                disabled={isPending || code.length < 4}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  marginTop: '1rem',
+                  background: 'var(--color-accent, #4f46e5)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  cursor: (isPending || code.length < 4) ? 'not-allowed' : 'pointer',
+                  opacity: (isPending || code.length < 4) ? 0.6 : 1,
+                }}
+              >
+                {isPending ? 'Шалгаж байна...' : 'Баталгаажуулах'}
+              </button>
 
-              <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
+              <div style={{ textAlign: 'center', marginTop: '1rem' }}>
                 <button
                   onClick={handleResend}
                   disabled={resendCountdown > 0 || isPending}
