@@ -152,7 +152,8 @@ export async function getOrganizationsForAdminList(limit = 500): Promise<Organiz
   ]);
 
   if (raw.error) {
-    throw raw.error;
+    console.error("[admin] getOrganizationsForAdminList error:", raw.error.message);
+    return [];
   }
 
   const rows = (raw.data ?? []) as unknown as (Omit<OrganizationOpsRow, "subscriptions" | "integration_connections"> & {
