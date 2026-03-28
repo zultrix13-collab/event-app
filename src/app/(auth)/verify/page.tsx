@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { verifyOTP, signInWithOTP } from '@/app/actions/auth';
-import { Suspense } from 'react';
 
 function VerifyForm() {
   const searchParams = useSearchParams();
@@ -41,11 +40,12 @@ function VerifyForm() {
     setError('');
   }
 
-  function handleVerify() {
-    if (!code || code.length < 4) return;
+  function handleVerify(codeToVerify?: string) {
+    const verifyCode = codeToVerify ?? code;
+    if (!verifyCode || verifyCode.length < 4) return;
     setError('');
     startTransition(async () => {
-      const result = await verifyOTP(email, code);
+      const result = await verifyOTP(email, verifyCode);
       if (result.success && result.redirectUrl) {
         router.push(result.redirectUrl);
       } else {
@@ -73,98 +73,174 @@ function VerifyForm() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg-app, #f8fafc)', padding: '1rem' }}>
-      <div style={{ width: '100%', maxWidth: 400 }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📩</div>
-          <h1 style={{ fontSize: '1.375rem', fontWeight: 700, margin: 0 }}>Кодоо оруулна уу</h1>
-          <p style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '0.5rem' }}>
-            <strong>{email}</strong> хаяг руу нэвтрэх код илгээлээ.
+    <main
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--color-bg-app)',
+        padding: 'var(--space-4)',
+      }}
+    >
+      <div style={{ width: '100%', maxWidth: '26rem' }}>
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 'var(--space-8)' }}>
+          <div
+            aria-hidden="true"
+            style={{
+              fontSize: '2.5rem',
+              marginBottom: 'var(--space-3)',
+              lineHeight: 1,
+            }}
+          >
+            📩
+          </div>
+          <h1
+            style={{
+              fontSize: 'var(--text-2xl)',
+              fontWeight: 'var(--font-weight-bold)',
+              margin: 0,
+              color: 'var(--color-text-primary)',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            Кодоо оруулна уу
+          </h1>
+          <p
+            style={{
+              color: 'var(--color-text-muted)',
+              fontSize: 'var(--text-sm)',
+              margin: 'var(--space-2) 0 0',
+            }}
+          >
+            <strong style={{ color: 'var(--color-text-primary)' }}>{email}</strong> хаяг руу{' '}
+            нэвтрэх код илгээлээ.
           </p>
         </div>
 
-        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', padding: '2rem', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+        {/* Card */}
+        <div
+          className="ui-card"
+          style={{ padding: 'var(--space-8)', animation: 'fadeIn 0.2s ease both' }}
+        >
           {totalCountdown === 0 ? (
             <div style={{ textAlign: 'center' }}>
-              <p style={{ color: '#b91c1c', fontWeight: 500 }}>Кодын хугацаа дууслаа.</p>
-              <button onClick={handleResend} style={{ marginTop: '1rem', padding: '0.625rem 1.5rem', background: 'var(--color-accent, #4f46e5)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>
+              <div className="ui-alert ui-alert--danger" style={{ marginBottom: 'var(--space-5)' }}>
+                Кодын хугацаа дууслаа.
+              </div>
+              <button
+                onClick={handleResend}
+                className="ui-button ui-button--primary ui-button--full"
+                style={{ padding: '0.75rem 1rem' }}
+              >
                 Шинэ код авах
               </button>
             </div>
           ) : (
             <>
-              <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-                <span style={{ fontSize: '1.125rem', fontWeight: 600, color: totalCountdown < 60 ? '#b91c1c' : 'var(--color-accent, #4f46e5)' }}>
+              {/* Countdown */}
+              <div style={{ textAlign: 'center', marginBottom: 'var(--space-5)' }}>
+                <span
+                  style={{
+                    fontSize: 'var(--text-xl)',
+                    fontWeight: 'var(--font-weight-bold)',
+                    color: totalCountdown < 60 ? 'var(--color-status-danger)' : 'var(--color-accent)',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
                   {formatTime(totalCountdown)}
                 </span>
-                <span style={{ color: '#64748b', fontSize: '0.75rem', marginLeft: '0.5rem' }}>үлдсэн</span>
+                <span
+                  style={{
+                    color: 'var(--color-text-muted)',
+                    fontSize: 'var(--text-xs)',
+                    marginLeft: 'var(--space-2)',
+                  }}
+                >
+                  үлдсэн
+                </span>
               </div>
 
-              <input
-                ref={inputRef}
-                type="text"
-                inputMode="numeric"
-                value={code}
-                onChange={(e) => handleChange(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Мэйлээр ирсэн кодоо оруулна уу"
-                disabled={isPending}
-                style={{
-                  width: '100%',
-                  padding: '0.875rem 1rem',
-                  fontSize: '1.25rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.2em',
-                  textAlign: 'center',
-                  border: '2px solid',
-                  borderColor: error ? '#fca5a5' : '#e2e8f0',
-                  borderRadius: 10,
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
+              {/* OTP input */}
+              <div>
+                <label htmlFor="otp-code" className="ui-label" style={{ marginBottom: 'var(--space-2)' }}>
+                  Нэвтрэх код
+                </label>
+                <input
+                  id="otp-code"
+                  ref={inputRef}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  aria-label="Нэг удаагийн нэвтрэх код"
+                  value={code}
+                  onChange={(e) => handleChange(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Мэйлээр ирсэн кодоо оруулна уу"
+                  disabled={isPending}
+                  className="ui-input"
+                  style={{
+                    marginTop: 'var(--space-2)',
+                    fontSize: 'var(--text-xl)',
+                    fontWeight: 'var(--font-weight-bold)',
+                    letterSpacing: '0.25em',
+                    textAlign: 'center',
+                    padding: '0.875rem 1rem',
+                    borderColor: error ? 'var(--color-status-danger-border)' : undefined,
+                  }}
+                />
+              </div>
 
+              {/* Error */}
               {error && (
-                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: 8, padding: '0.625rem 0.875rem', marginTop: '0.75rem', fontSize: '0.875rem', textAlign: 'center' }}>
+                <div
+                  className="ui-alert ui-alert--danger"
+                  style={{ marginTop: 'var(--space-3)', textAlign: 'center' }}
+                >
                   {error}
                 </div>
               )}
 
+              {/* Submit */}
               <button
-                onClick={handleVerify}
+                onClick={() => handleVerify()}
                 disabled={isPending || code.length < 4}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  marginTop: '1rem',
-                  background: 'var(--color-accent, #4f46e5)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  fontWeight: 600,
-                  fontSize: '0.9rem',
-                  cursor: (isPending || code.length < 4) ? 'not-allowed' : 'pointer',
-                  opacity: (isPending || code.length < 4) ? 0.6 : 1,
-                }}
+                className="ui-button ui-button--primary ui-button--full"
+                style={{ marginTop: 'var(--space-4)', padding: '0.75rem 1rem' }}
               >
                 {isPending ? 'Шалгаж байна...' : 'Баталгаажуулах'}
               </button>
 
-              <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+              {/* Resend */}
+              <div style={{ textAlign: 'center', marginTop: 'var(--space-4)' }}>
                 <button
                   onClick={handleResend}
                   disabled={resendCountdown > 0 || isPending}
-                  style={{ background: 'none', border: 'none', cursor: resendCountdown > 0 ? 'default' : 'pointer', color: resendCountdown > 0 ? '#94a3b8' : 'var(--color-accent, #4f46e5)', fontSize: '0.875rem', fontWeight: 500 }}
+                  className="ui-button ui-button--ghost"
+                  style={{ fontSize: 'var(--text-sm)' }}
                 >
-                  {resendCountdown > 0 ? `Дахин код авах (${resendCountdown}с)` : 'Дахин код авах'}
+                  {resendCountdown > 0
+                    ? `Дахин код авах (${resendCountdown}с)`
+                    : 'Дахин код авах'}
                 </button>
               </div>
             </>
           )}
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
-          <a href="/login" style={{ fontSize: '0.875rem', color: '#64748b', textDecoration: 'none' }}>← Буцах</a>
+        {/* Back link */}
+        <div style={{ textAlign: 'center', marginTop: 'var(--space-5)' }}>
+          <a
+            href="/login"
+            style={{
+              fontSize: 'var(--text-sm)',
+              color: 'var(--color-text-muted)',
+              textDecoration: 'none',
+            }}
+          >
+            ← Нэвтрэх хуудас руу буцах
+          </a>
         </div>
       </div>
     </main>
@@ -173,7 +249,25 @@ function VerifyForm() {
 
 export default function VerifyPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Уншиж байна...</div>}>
+    <Suspense
+      fallback={
+        <main
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'var(--color-bg-app)',
+            padding: 'var(--space-4)',
+          }}
+        >
+          <div className="ui-card" style={{ width: '100%', maxWidth: '26rem', padding: 'var(--space-8)', textAlign: 'center' }}>
+            <div aria-hidden="true" style={{ fontSize: '2.5rem', marginBottom: 'var(--space-3)' }}>📩</div>
+            <p className="ui-text-muted">Уншиж байна...</p>
+          </div>
+        </main>
+      }
+    >
       <VerifyForm />
     </Suspense>
   );
