@@ -123,6 +123,117 @@ export async function getWalletTransactions(walletId: string, limit = 20) {
   return data ?? [];
 }
 
+/**
+ * deductFromWallet — ACID purchase deduction via wallet_transfer RPC.
+ */
+export async function deductFromWallet(
+  userId: string,
+  amount: number,
+  description: string,
+  idempotencyKey: string
+): Promise<{ success: boolean; error?: string; newBalance?: number }> {
+  const admin = getAdminClient();
+
+  const { data, error } = await admin.rpc('wallet_transfer', {
+    p_user_id: userId,
+    p_amount: amount,
+    p_type: 'purchase',
+    p_idempotency_key: idempotencyKey,
+    p_description: description,
+  });
+
+  if (error) {
+    console.error('[wallet] wallet_transfer RPC error:', error);
+    if (error.message?.includes('insufficient')) {
+      return { success: false, error: 'Хэтэвчний үлдэгдэл хүрэлцэхгүй байна' };
+    }
+    return { success: false, error: error.message };
+  }
+
+  const result = data as { success: boolean; error?: string; new_balance?: number };
+  if (!result?.success) {
+    const msg = result?.error ?? 'Гүйлгээ амжилтгүй боллоо';
+    if (msg.includes('insufficient')) {
+      return { success: false, error: 'Хэтэвчний үлдэгдэл хүрэлцэхгүй байна' };
+    }
+    return { success: false, error: msg };
+  }
+
+  return { success: true, newBalance: result.new_balance };
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// PAY-01: Unified ACID wallet transaction via process_wallet_transaction RPC
+// ────────────────────────────────────────────────────────────────────────────
+
+export type WalletTransactionType = 'topup' | 'purchase' | 'refund' | 'transfer';
+
+export interface WalletTransactionResult {
+  success: boolean;
+  transaction_id?: string;
+  balance?: number;
+  idempotent?: boolean;
+  error?: string;
+}
+
+export async function processWalletTransaction(params: {
+  userId: string;
+  type: WalletTransactionType;
+  amount: number;
+  idempotencyKey: string;
+  referenceId?: string;
+  description?: string;
+}): Promise<WalletTransactionResult> {
+  const admin = getAdminClient();
+
+  const { data, error } = await admin.rpc('process_wallet_transaction', {
+    p_user_id: params.userId,
+    p_type: params.type,
+    p_amount: params.amount,
+    p_idempotency_key: params.idempotencyKey,
+    p_reference_id: params.referenceId ?? null,
+    p_description: params.description ?? null,
+  });
+
+  if (error) {
+    console.error('[Wallet] Transaction error:', error);
+    return { success: false, error: 'Гүйлгээ хийхэд алдаа гарлаа' };
+  }
+
+  return data as WalletTransactionResult;
+}
+
+export async function getWalletBalance(userId: string): Promise<number> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('wallets')
+    .select('balance')
+    .eq('user_id', userId)
+    .single();
+  return (data as { balance: number } | null)?.balance ?? 0;
+}
+
+export async function topupWalletAcid(
+  userId: string,
+  amount: number,
+  idempotencyKey: string,
+  description?: string
+): Promise<WalletTransactionResult> {
+  return processWalletTransaction({ userId, type: 'topup', amount, idempotencyKey, description });
+}
+
+export async function deductFromWalletAcid(
+  userId: string,
+  amount: number,
+  idempotencyKey: string,
+  referenceId?: string,
+  description?: string
+): Promise<WalletTransactionResult> {
+  return processWalletTransaction({ userId, type: 'purchase', amount, idempotencyKey, referenceId, description });
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+
 export async function createSocialPayTopup(amount: number): Promise<{
   success: boolean;
   invoiceId?: string;
