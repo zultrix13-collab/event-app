@@ -30,6 +30,10 @@ dependencies:
   fl_chart: ^0.68.0
   pedometer: ^4.0.1
   http: ^1.2.0
+  crypto: ^3.0.0
+  uuid: ^4.4.0
+  flutter_nfc_kit: ^3.5.0
+  local_auth: ^2.3.0
 
 dev_dependencies:
   flutter_test:
