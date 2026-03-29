@@ -8,43 +8,21 @@ export async function registerForSession(sessionId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Нэвтрэх шаардлагатай' };
 
-  const { data: session } = await supabase
-    .from('event_sessions')
-    .select('capacity, registered_count, is_registration_open')
-    .eq('id', sessionId)
-    .single();
-
-  if (!session) return { success: false, error: 'Арга хэмжаа олдсонгүй' };
-  if (!session.is_registration_open) return { success: false, error: 'Бүртгэл хаагдсан' };
-
-  const { data: existing } = await supabase
-    .from('seat_registrations')
-    .select('id, status')
-    .eq('session_id', sessionId)
-    .eq('user_id', user.id)
-    .single();
-
-  if (existing?.status === 'confirmed') return { success: false, error: 'Та аль хэдийн бүртгүүлсэн байна' };
-
-  const isFull = session.capacity > 0 && session.registered_count >= session.capacity;
-  const status = isFull ? 'waitlisted' : 'confirmed';
-
-  const { error } = await supabase
-    .from('seat_registrations')
-    .upsert({
-      session_id: sessionId,
-      user_id: user.id,
-      status,
-    });
+  const { data, error } = await supabase.rpc('register_for_session', {
+    p_session_id: sessionId,
+    p_user_id: user.id,
+  });
 
   if (error) return { success: false, error: 'Бүртгэл хийхэд алдаа гарлаа' };
 
-  if (status === 'confirmed') {
-    await supabase.rpc('increment_session_count', { p_session_id: sessionId });
+  const result = data as { success: boolean; status?: string; error?: string };
+
+  if (result.success && result.status === 'confirmed') {
+    revalidatePath('/app/programme');
+    revalidatePath(`/app/programme/${sessionId}`);
   }
 
-  revalidatePath('/app/programme');
-  return { success: true, status, waitlisted: isFull };
+  return result;
 }
 
 // Cancel registration
