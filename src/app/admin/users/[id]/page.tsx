@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
-import { approveUser } from '@/app/actions/auth';
+import { approveUser, updateUserRole, updateUserStatus } from '@/app/actions/auth';
 import { generateDigitalIdPayload } from '@/modules/auth/digital-id';
 import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-const ROLES = ['super_admin', 'specialist', 'vip', 'participant'] as const;
+const ROLES = ['participant', 'vip', 'specialist', 'super_admin'] as const;
 
 const ROLE_COLORS: Record<string, string> = {
   super_admin: '#7c3aed',
@@ -57,6 +57,24 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
     await approveUser(id, false);
   }
 
+  async function handleRoleChange(formData: FormData) {
+    'use server';
+    const role = formData.get('role') as string;
+    await updateUserRole(id, role);
+  }
+
+  async function handleToggleApproved(formData: FormData) {
+    'use server';
+    const newValue = formData.get('is_approved') === 'true';
+    await updateUserStatus(id, { is_approved: newValue });
+  }
+
+  async function handleToggleActive(formData: FormData) {
+    'use server';
+    const newValue = formData.get('is_active') === 'true';
+    await updateUserStatus(id, { is_active: newValue });
+  }
+
   async function handleGenerateDigitalId() {
     'use server';
     const supabase2 = await getSupabaseServerClient();
@@ -85,6 +103,8 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
   ];
 
   const role = (profile.role ?? 'participant') as string;
+  const isApproved = !!(profile as Record<string, unknown>).is_approved;
+  const isActive = !!(profile as Record<string, unknown>).is_active;
 
   return (
     <section style={{ padding: '2rem', maxWidth: 720 }}>
@@ -93,7 +113,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
       </Link>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1rem', marginBottom: '1.5rem' }}>
-        <div style={{ width: 52, height: 52, borderRadius: '50%', background: `${ROLE_COLORS[role]}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+        <div style={{ width: 52, height: 52, borderRadius: '50%', background: `${ROLE_COLORS[role] ?? '#94a3b8'}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
           {role === 'vip' ? '⭐' : role === 'super_admin' ? '🔐' : role === 'specialist' ? '🔧' : '👤'}
         </div>
         <div>
@@ -101,7 +121,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
           <span style={{
             display: 'inline-block', marginTop: '0.25rem',
             padding: '0.2rem 0.625rem', borderRadius: 20, fontSize: '0.75rem', fontWeight: 600,
-            background: `${ROLE_COLORS[role]}18`, color: ROLE_COLORS[role],
+            background: `${ROLE_COLORS[role] ?? '#94a3b8'}18`, color: ROLE_COLORS[role] ?? '#94a3b8',
           }}>
             {role}
           </span>
@@ -123,9 +143,55 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
         </dl>
       </div>
 
-      {/* Actions */}
+      {/* Role & Status Management */}
       <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: '1.25rem', marginBottom: '1.5rem' }}>
-        <h2 style={{ fontSize: '0.9rem', fontWeight: 600, margin: '0 0 1rem' }}>Үйлдлүүд</h2>
+        <h2 style={{ fontSize: '0.9rem', fontWeight: 600, margin: '0 0 1rem' }}>Дүр болон статус өөрчлөх</h2>
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+          {/* Role change */}
+          <form action={handleRoleChange} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <label style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 500 }}>Дүр:</label>
+            <select name="role" defaultValue={role} style={{ padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: '0.875rem' }}>
+              {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+            </select>
+            <button type="submit" style={{ padding: '0.5rem 1rem', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: '0.875rem' }}>
+              Хадгалах
+            </button>
+          </form>
+
+          {/* is_approved toggle */}
+          <form action={handleToggleApproved} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <input type="hidden" name="is_approved" value={isApproved ? 'false' : 'true'} />
+            <button type="submit" style={{
+              padding: '0.5rem 1rem',
+              background: isApproved ? '#fef2f2' : '#f0fdf4',
+              color: isApproved ? '#b91c1c' : '#166534',
+              border: `1px solid ${isApproved ? '#fecaca' : '#bbf7d0'}`,
+              borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: '0.875rem'
+            }}>
+              {isApproved ? '✗ Батлалт цуцлах' : '✓ Батлах'}
+            </button>
+          </form>
+
+          {/* is_active toggle (ban/unban) */}
+          <form action={handleToggleActive} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <input type="hidden" name="is_active" value={isActive ? 'false' : 'true'} />
+            <button type="submit" style={{
+              padding: '0.5rem 1rem',
+              background: isActive ? '#fff7ed' : '#f0fdf4',
+              color: isActive ? '#c2410c' : '#166534',
+              border: `1px solid ${isActive ? '#fed7aa' : '#bbf7d0'}`,
+              borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: '0.875rem'
+            }}>
+              {isActive ? '🚫 Хаах (Ban)' : '✓ Идэвхжүүлэх (Unban)'}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* Legacy approve/reject Actions */}
+      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: '1.25rem', marginBottom: '1.5rem' }}>
+        <h2 style={{ fontSize: '0.9rem', fontWeight: 600, margin: '0 0 1rem' }}>Батлах / Татгалзах</h2>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'flex-start' }}>
           {/* Approve with role */}
           <form action={handleApprove} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>

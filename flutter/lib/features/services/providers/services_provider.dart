@@ -7,6 +7,7 @@ import 'package:event_app/features/services/models/restaurant.dart';
 import 'package:event_app/features/services/models/hotel.dart';
 import 'package:event_app/features/services/models/lost_found.dart';
 import 'package:event_app/features/services/models/transport_booking.dart';
+import 'package:event_app/features/services/models/vendor.dart';
 import 'package:event_app/features/services/repositories/services_repository.dart';
 
 // ── Repository ─────────────────────────────────────────────────────────────
@@ -75,4 +76,11 @@ final hotelsProvider = FutureProvider.autoDispose<List<Hotel>>((ref) {
 final myLostFoundProvider =
     FutureProvider.autoDispose<List<LostFoundItem>>((ref) {
   return ref.watch(servicesRepositoryProvider).fetchMyLostFound();
+});
+
+// ── Vendors ────────────────────────────────────────────────────────────────
+
+final vendorsProvider =
+    FutureProvider.autoDispose.family<List<Vendor>, String?>((ref, category) {
+  return ref.watch(servicesRepositoryProvider).fetchVendors(category: category);
 });

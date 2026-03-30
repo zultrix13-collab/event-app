@@ -6,6 +6,7 @@ import 'package:event_app/features/services/models/transport_booking.dart';
 import 'package:event_app/features/services/models/restaurant.dart';
 import 'package:event_app/features/services/models/hotel.dart';
 import 'package:event_app/features/services/models/lost_found.dart';
+import 'package:event_app/features/services/models/vendor.dart';
 
 class ServicesRepository {
   final SupabaseClient _client;
@@ -186,5 +187,21 @@ class ServicesRepository {
         .eq('id', invoiceId)
         .maybeSingle();
     return data;
+  }
+
+  // ── Vendors ───────────────────────────────────────────────────────────────
+
+  Future<List<Vendor>> fetchVendors({String? category}) async {
+    var query = _client
+        .from('vendors')
+        .select()
+        .eq('is_active', true);
+
+    if (category != null) {
+      query = query.eq('category', category);
+    }
+
+    final data = await query.order('booth_number', ascending: true);
+    return (data as List).map((e) => Vendor.fromJson(e)).toList();
   }
 }

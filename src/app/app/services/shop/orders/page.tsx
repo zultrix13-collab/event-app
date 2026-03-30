@@ -1,29 +1,68 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getUserOrders } from '@/modules/services/actions';
+import { getSupabaseBrowserClient } from '@/lib/supabase/browser';
 import type { Order } from '@/modules/services/types';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 const STATUS_CONFIG = {
-  pending: { label: 'Хүлээгдэж буй', color: 'bg-yellow-100 text-yellow-800' },
-  paid: { label: 'Төлөгдсөн', color: 'bg-green-100 text-green-800' },
-  cancelled: { label: 'Цуцалсан', color: 'bg-red-100 text-red-800' },
-  refunded: { label: 'Буцаалт', color: 'bg-gray-100 text-gray-800' },
+  pending: { label: 'Хүлээгдэж буй', color: 'bg-yellow-100 text-yellow-800', icon: '⏳' },
+  paid: { label: 'Төлөгдсөн', color: 'bg-green-100 text-green-800', icon: '✅' },
+  cancelled: { label: 'Цуцалсан', color: 'bg-red-100 text-red-800', icon: '❌' },
+  refunded: { label: 'Буцаалт', color: 'bg-gray-100 text-gray-800', icon: '↩️' },
 };
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const newOrderId = searchParams.get('new');
+
+  const loadOrders = useCallback(async () => {
+    const result = await getUserOrders();
+    if (result.success && result.data) {
+      setOrders(result.data);
+    }
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
-    getUserOrders().then((result) => {
-      if (result.success && result.data) {
-        setOrders(result.data);
-      }
-      setLoading(false);
-    });
+    loadOrders();
+  }, [loadOrders]);
+
+  // Expand newly created order
+  useEffect(() => {
+    if (newOrderId) {
+      setExpanded(newOrderId);
+    }
+  }, [newOrderId]);
+
+  // Realtime subscribe: order status changes
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    const channel = supabase
+      .channel('orders-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders' },
+        (payload) => {
+          setOrders((prev) =>
+            prev.map((o) =>
+              o.id === payload.new.id
+                ? { ...o, status: payload.new.status, paid_at: payload.new.paid_at }
+                : o
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
@@ -31,6 +70,11 @@ export default function OrdersPage() {
       <div className="flex items-center gap-3 mb-6">
         <Link href="/app/services/shop" className="text-blue-600 text-sm">← Буцах</Link>
         <h1 className="text-xl font-bold text-gray-900">Захиалгын түүх</h1>
+        {orders.length > 0 && (
+          <span className="ml-auto text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">
+            {orders.length} захиалга
+          </span>
+        )}
       </div>
 
       {loading ? (
@@ -52,17 +96,30 @@ export default function OrdersPage() {
           {orders.map((order) => {
             const statusCfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending;
             const isExpanded = expanded === order.id;
+            const isNew = order.id === newOrderId;
 
             return (
-              <div key={order.id} className="bg-white rounded-xl border overflow-hidden">
+              <div
+                key={order.id}
+                className={`bg-white rounded-xl border overflow-hidden transition-shadow ${
+                  isNew ? 'ring-2 ring-blue-400 shadow-md' : ''
+                }`}
+              >
                 <button
                   onClick={() => setExpanded(isExpanded ? null : order.id)}
                   className="w-full flex items-center justify-between p-4 text-left"
                 >
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Захиалга #{order.id.slice(0, 8).toUpperCase()}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-gray-900">
+                        Захиалга #{order.id.slice(0, 8).toUpperCase()}
+                      </p>
+                      {isNew && (
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                          Шинэ
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 mt-0.5">
                       {new Date(order.created_at).toLocaleDateString('mn-MN', {
                         year: 'numeric', month: 'short', day: 'numeric',
@@ -72,7 +129,7 @@ export default function OrdersPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusCfg.color}`}>
-                      {statusCfg.label}
+                      {statusCfg.icon} {statusCfg.label}
                     </span>
                     <span className="text-blue-600 font-bold text-sm">
                       ₮{Number(order.total_amount).toLocaleString()}
@@ -97,7 +154,15 @@ export default function OrdersPage() {
                     </div>
                     {order.payment_method && (
                       <p className="text-xs text-gray-500 mt-2">
-                        Төлбөр: {order.payment_method}
+                        Төлбөр: {order.payment_method === 'wallet' ? '💳 Хэтэвч' : order.payment_method}
+                      </p>
+                    )}
+                    {order.paid_at && (
+                      <p className="text-xs text-green-600 mt-1">
+                        ✅ {new Date(order.paid_at).toLocaleDateString('mn-MN', {
+                          month: 'short', day: 'numeric',
+                          hour: '2-digit', minute: '2-digit',
+                        })}-д төлөгдсөн
                       </p>
                     )}
                   </div>

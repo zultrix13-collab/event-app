@@ -118,6 +118,20 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
 
+    // /admin/* → MFA (aal2) required, except the mfa-required page itself
+    if (
+      pathname.startsWith("/admin") &&
+      !pathname.startsWith("/admin/mfa-required") &&
+      role === "super_admin"
+    ) {
+      const { data: mfaData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (mfaData && mfaData.currentLevel !== "aal2") {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = "/admin/mfa-required";
+        return NextResponse.redirect(redirectUrl);
+      }
+    }
+
     // /specialist/* → specialist or super_admin
     if (pathname.startsWith("/specialist") && role !== "specialist" && role !== "super_admin") {
       const redirectUrl = request.nextUrl.clone();

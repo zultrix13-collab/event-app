@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:event_app/features/auth/providers/auth_provider.dart';
-import 'package:event_app/shared/widgets/loading_widget.dart';
+
 
 class VerifyScreen extends ConsumerStatefulWidget {
   const VerifyScreen({super.key, required this.email});
@@ -45,11 +45,37 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
     // Auth state өөрчлөгдвөл router автоматаар redirect хийнэ
   }
 
+  Future<void> _resendOtp() async {
+    final cooldown = ref.read(authProvider).cooldownSeconds;
+    if (cooldown > 0) return;
+
+    setState(() => _isLoading = true);
+    await ref.read(authProvider.notifier).sendOtp(widget.email);
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    final authState = ref.read(authProvider);
+    final error = authState.otpError ?? authState.error;
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), backgroundColor: Colors.red),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('OTP дахин илгээлээ'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(body: LoadingWidget(message: 'Шалгаж байна...'));
-    }
+    // Watch cooldown from provider
+    final cooldown = ref.watch(authProvider).cooldownSeconds;
+    final isOnCooldown = cooldown > 0;
 
     return Scaffold(
       appBar: AppBar(
@@ -85,28 +111,56 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
                 TextFormField(
                   controller: _otpController,
                   keyboardType: TextInputType.number,
-                  maxLength: 6,
+                  maxLength: 8,
                   textAlign: TextAlign.center,
+                  enabled: !_isLoading,
                   style: Theme.of(context).textTheme.headlineMedium,
                   decoration: const InputDecoration(
                     labelText: 'OTP код',
-                    hintText: '000000',
+                    hintText: '00000000',
                     counterText: '',
                   ),
                   validator: (v) {
-                    if (v == null || v.length < 6) return '6 оронтой OTP оруулна уу';
+                    if (v == null || v.length < 6) return 'OTP кодоо бүрэн оруулна уу';
                     return null;
                   },
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: _verify,
-                  child: const Text('Баталгаажуулах'),
+                  onPressed: _isLoading ? null : _verify,
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Баталгаажуулах'),
                 ),
                 const SizedBox(height: 16),
+
+                // Resend OTP button with cooldown
                 TextButton(
-                  onPressed: () => context.go('/login'),
-                  child: const Text('Буцах'),
+                  onPressed: (_isLoading || isOnCooldown) ? null : _resendOtp,
+                  child: Text(
+                    isOnCooldown
+                        ? 'Дахин илгээх (${cooldown}с)'
+                        : 'Дахин илгээх',
+                    style: TextStyle(
+                      color: isOnCooldown
+                          ? Theme.of(context).colorScheme.onSurfaceVariant
+                          : Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ),
+
+                TextButton(
+                  onPressed: _isLoading ? null : () => context.go('/login'),
+                  child: Text(
+                    'Буцах',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ),
               ],
             ),

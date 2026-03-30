@@ -6,21 +6,28 @@ import { getRoleRedirect } from '@/modules/auth/rbac';
 import type { VipApplication } from '@/modules/auth/types';
 import { revalidatePath } from 'next/cache';
 
-// Check OTP rate limit
+// Check OTP rate limit via RPC (check_otp_rate_limit)
 async function checkOtpRateLimit(
+  supabase: Awaited<ReturnType<typeof createClient>>,
   email: string
-): Promise<{ blocked: boolean; blockedUntil?: Date }> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from('otp_attempts')
-    .select('*')
-    .eq('email', email)
-    .single();
+): Promise<{ blocked: boolean; blockedUntil?: Date; minutesLeft?: number }> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc('check_otp_rate_limit', { p_email: email });
 
-  if (!data) return { blocked: false };
-  if (data.blocked_until && new Date(data.blocked_until) > new Date()) {
-    return { blocked: true, blockedUntil: new Date(data.blocked_until) };
+  if (error) {
+    // RPC unavailable — fail open (allow the request)
+    console.warn('[checkOtpRateLimit] RPC error:', error.message);
+    return { blocked: false };
   }
+
+  const result = data as { allowed: boolean; attempts_left: number; blocked_until: string | null };
+
+  if (!result.allowed && result.blocked_until) {
+    const blockedUntil = new Date(result.blocked_until);
+    const minutesLeft = Math.ceil((blockedUntil.getTime() - Date.now()) / 60_000);
+    return { blocked: true, blockedUntil, minutesLeft };
+  }
+
   return { blocked: false };
 }
 
@@ -28,9 +35,12 @@ export async function signInWithOTP(email: string) {
   try {
     const supabase = await createClient();
 
-    const { blocked, blockedUntil } = await checkOtpRateLimit(email);
+    const { blocked, minutesLeft } = await checkOtpRateLimit(supabase, email);
     if (blocked) {
-      return { success: false, error: 'Хэт олон оролдлого. Түр хүлээнэ үү.', blockedUntil };
+      return {
+        success: false,
+        error: `Хэт олон оролдлого. ${minutesLeft ?? 10} минутын дараа дахин оролдоно уу.`,
+      };
     }
 
     const { error } = await supabase.auth.signInWithOtp({
@@ -48,6 +58,16 @@ export async function signInWithOTP(email: string) {
 export async function verifyOTP(email: string, token: string) {
   try {
     const supabase = await createClient();
+
+    // Rate-limit check before attempting verify
+    const { blocked, minutesLeft } = await checkOtpRateLimit(supabase, email);
+    if (blocked) {
+      return {
+        success: false,
+        error: `Хэт олон оролдлого. ${minutesLeft ?? 10} минутын дараа дахин оролдоно уу.`,
+      };
+    }
+
     const { data, error } = await supabase.auth.verifyOtp({
       email,
       token,
@@ -166,6 +186,42 @@ export async function approveUser(userId: string, approve: boolean, role?: strin
       });
     }
 
+    revalidatePath('/admin/users');
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Алдаа гарлаа.' };
+  }
+}
+
+// Admin: update user role
+export async function updateUserRole(userId: string, role: string) {
+  try {
+    const { getSupabaseAdminClient } = await import('@/lib/supabase/admin');
+    const admin = getSupabaseAdminClient();
+    const { error } = await admin
+      .from('profiles')
+      .update({ role } as Record<string, unknown>)
+      .eq('id', userId);
+    if (error) return { success: false, error: error.message };
+    revalidatePath(`/admin/users/${userId}`);
+    revalidatePath('/admin/users');
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Алдаа гарлаа.' };
+  }
+}
+
+// Admin: update user status (is_approved, is_active)
+export async function updateUserStatus(userId: string, params: { is_approved?: boolean; is_active?: boolean }) {
+  try {
+    const { getSupabaseAdminClient } = await import('@/lib/supabase/admin');
+    const admin = getSupabaseAdminClient();
+    const { error } = await admin
+      .from('profiles')
+      .update(params as Record<string, unknown>)
+      .eq('id', userId);
+    if (error) return { success: false, error: error.message };
+    revalidatePath(`/admin/users/${userId}`);
     revalidatePath('/admin/users');
     return { success: true };
   } catch {

@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:event_app/core/notifications/firebase_messaging_service.dart';
 import 'package:event_app/core/supabase/supabase_client.dart';
 
 // ---------------------------------------------------------------------------
@@ -16,6 +18,8 @@ class AuthState {
     this.error,
     this.isApproved,
     this.role,
+    this.cooldownSeconds = 0,
+    this.otpError,
   });
 
   final AuthStatus status;
@@ -29,10 +33,18 @@ class AuthState {
   /// Хэрэглэгчийн үүрэг: 'vip' | 'participant' | 'specialist'
   final String? role;
 
+  /// OTP resend cooldown (seconds remaining)
+  final int cooldownSeconds;
+
+  /// OTP-specific error message
+  final String? otpError;
+
   bool get isAuthenticated => status == AuthStatus.authenticated;
 
   /// pending-approval дэлгэц үзүүлэх эсэх
   bool get needsApproval => isAuthenticated && isApproved == false;
+
+  bool get isOnCooldown => cooldownSeconds > 0;
 
   AuthState copyWith({
     AuthStatus? status,
@@ -40,6 +52,8 @@ class AuthState {
     String? error,
     bool? isApproved,
     String? role,
+    int? cooldownSeconds,
+    String? otpError,
   }) {
     return AuthState(
       status: status ?? this.status,
@@ -47,6 +61,8 @@ class AuthState {
       error: error,
       isApproved: isApproved ?? this.isApproved,
       role: role ?? this.role,
+      cooldownSeconds: cooldownSeconds ?? this.cooldownSeconds,
+      otpError: otpError,
     );
   }
 }
@@ -61,6 +77,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   final _client = SupabaseConfig.client;
+  Timer? _cooldownTimer;
+
+  @override
+  void dispose() {
+    _cooldownTimer?.cancel();
+    super.dispose();
+  }
 
   void _init() {
     final session = _client.auth.currentSession;
@@ -74,7 +97,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _client.auth.onAuthStateChange.listen((data) {
       final session = data.session;
       if (session != null) {
-        state = AuthState(status: AuthStatus.authenticated, session: session);
+        state = state.copyWith(
+          status: AuthStatus.authenticated,
+          session: session,
+        );
         _fetchUserProfile(session.user.id);
       } else {
         state = const AuthState(status: AuthStatus.unauthenticated);
@@ -97,27 +123,114 @@ class AuthNotifier extends StateNotifier<AuthState> {
           role: data['role'] as String? ?? 'participant',
         );
       } else {
-        // Профайл олдоогүй бол баталгаажаагүй гэж үзнэ
         state = state.copyWith(isApproved: false, role: 'participant');
       }
     } catch (e) {
-      // profiles хүснэгт байхгүй / RLS алдаа → нэвтэрч байгаа ч баталгаажаагүй гэж үзнэ
-      // Crash болохоос сэргийлж graceful fallback хийнэ
       debugPrint('[AuthNotifier] profile fetch failed (table missing / RLS): $e');
       state = state.copyWith(isApproved: false, role: 'participant');
+    }
+
+    // --- NEW: Sync FCM Token ---
+    try {
+      final token = await FirebaseMessagingService.getToken();
+      if (token != null) {
+        await _client
+            .from('profiles')
+            .update({'fcm_token': token})
+            .eq('id', userId);
+        debugPrint('✅ FCM Token synced for user: $userId');
+      }
+    } catch (e) {
+      debugPrint('⚠️ FCM Token sync failed: $e');
+      // This might fail if the column 'fcm_token' doesn't exist yet
+    }
+  }
+
+  /// Start 60s resend cooldown timer
+  void _startCooldown([int seconds = 60]) {
+    _cooldownTimer?.cancel();
+    state = state.copyWith(cooldownSeconds: seconds);
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      final remaining = state.cooldownSeconds - 1;
+      if (remaining <= 0) {
+        timer.cancel();
+        state = state.copyWith(cooldownSeconds: 0);
+      } else {
+        state = state.copyWith(cooldownSeconds: remaining);
+      }
+    });
+  }
+
+  /// Check OTP rate limit via Supabase RPC.
+  /// Returns null if allowed, or an error message string if blocked.
+  Future<String?> _checkRateLimit(String email) async {
+    try {
+      final result = await _client.rpc(
+        'check_otp_rate_limit',
+        params: {'p_email': email},
+      );
+      if (result == null) return null;
+      final data = result as Map<String, dynamic>;
+      final allowed = data['allowed'] as bool? ?? true;
+      if (!allowed) {
+        final blockedUntil = data['blocked_until'] as String?;
+        int minutesLeft = 10;
+        if (blockedUntil != null) {
+          final blockedDate = DateTime.tryParse(blockedUntil);
+          if (blockedDate != null) {
+            minutesLeft =
+                ((blockedDate.difference(DateTime.now()).inSeconds + 59) ~/ 60)
+                    .clamp(1, 60);
+          }
+        }
+        return 'Хэт олон оролдлого. $minutesLeft минутын дараа дахин оролдоно уу.';
+      }
+      return null;
+    } catch (e) {
+      // Fail open — RPC unavailable, allow the request
+      debugPrint('[AuthNotifier] rate limit RPC error: $e');
+      return null;
     }
   }
 
   /// Email OTP илгээх
   Future<void> sendOtp(String email) async {
-    state = state.copyWith(status: AuthStatus.loading);
+    // Local cooldown check
+    if (state.isOnCooldown) {
+      state = state.copyWith(
+        otpError: 'Хүлээнэ үү: ${state.cooldownSeconds} секунд',
+      );
+      return;
+    }
+
+    state = state.copyWith(
+      status: AuthStatus.loading,
+      otpError: null,
+      error: null, // Clear general errors too
+    );
+
+    // Server-side rate limit via RPC
+    final rateLimitError = await _checkRateLimit(email);
+    if (rateLimitError != null) {
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        otpError: rateLimitError,
+      );
+      return;
+    }
+
     try {
       await _client.auth.signInWithOtp(email: email);
-      state = state.copyWith(status: AuthStatus.unauthenticated);
+      _startCooldown(60);
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        otpError: null,
+      );
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
         error: e.toString(),
+        otpError: e.toString(),
       );
     }
   }
@@ -132,6 +245,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         type: OtpType.email,
       );
       if (response.session != null) {
+        _cooldownTimer?.cancel();
         state = AuthState(
           status: AuthStatus.authenticated,
           session: response.session,
@@ -151,8 +265,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Google Sign-In — Supabase native OAuth (Firebase/google_sign_in шаардахгүй)
+  Future<void> signInWithGoogle() async {
+    state = state.copyWith(status: AuthStatus.loading);
+    try {
+      await _client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: 'mn.devgrafx.eventapp://login-callback',
+      );
+      // Auth state change нь onAuthStateChange listener-ээр автоматаар handle хийгдэнэ
+    } catch (e) {
+      debugPrint('[AuthNotifier] Google Sign-In error: $e');
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        error: 'Google-ээр нэвтрэх амжилтгүй: $e',
+      );
+    }
+  }
+
   /// Sign out
   Future<void> signOut() async {
+    _cooldownTimer?.cancel();
     await _client.auth.signOut();
     state = const AuthState(status: AuthStatus.unauthenticated);
   }

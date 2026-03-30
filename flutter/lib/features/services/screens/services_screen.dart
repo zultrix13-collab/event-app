@@ -44,6 +44,11 @@ class ServicesScreen extends StatelessWidget {
             label: 'Олдвор/гээдэг',
             route: '/services/lost-found',
           ),
+          _ServiceCard(
+            icon: '🏪',
+            label: 'Дэлгүүрүүд',
+            route: '/services/vendors',
+          ),
         ],
       ),
     );

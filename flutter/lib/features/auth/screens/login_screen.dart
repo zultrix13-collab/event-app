@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:event_app/features/auth/providers/auth_provider.dart';
-import 'package:event_app/shared/widgets/loading_widget.dart';
+
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -22,18 +22,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+    await ref.read(authProvider.notifier).signInWithGoogle();
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    final error = ref.read(authProvider).error;
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), backgroundColor: Colors.red),
+      );
+    }
+    // Auth state өөрчлөгдвөл router автоматаар redirect хийнэ
+  }
+
   Future<void> _sendOtp() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+    // Check cooldown before sending
+    final cooldown = ref.read(authProvider).cooldownSeconds;
+    if (cooldown > 0) return;
+
     final email = _emailController.text.trim();
+    setState(() => _isLoading = true);
 
     await ref.read(authProvider.notifier).sendOtp(email);
 
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    final error = ref.read(authProvider).error;
+    final authState = ref.read(authProvider);
+    final error = authState.otpError ?? authState.error;
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error), backgroundColor: Colors.red),
@@ -46,7 +66,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Scaffold(body: LoadingWidget(message: 'OTP илгээж байна...'));
+    // Watch cooldown from provider
+    final cooldown = ref.watch(authProvider).cooldownSeconds;
+    final isOnCooldown = cooldown > 0;
 
     return Scaffold(
       body: SafeArea(
@@ -80,6 +102,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  enabled: !_isLoading,
                   decoration: const InputDecoration(
                     labelText: 'Email хаяг',
                     hintText: 'name@example.com',
@@ -93,9 +116,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: _sendOtp,
-                  child: const Text('OTP илгээх'),
+                  onPressed: (_isLoading || isOnCooldown) ? null : _sendOtp,
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(
+                          isOnCooldown
+                              ? 'Дахин илгээх (${cooldown}с)'
+                              : 'OTP илгээх',
+                        ),
                 ),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'эсвэл',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                      ),
+                    ),
+                    const Expanded(child: Divider()),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _signInWithGoogle,
+                  icon: const Icon(Icons.g_mobiledata, size: 22),
+                  label: const Text('Google-ээр нэвтрэх'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+                  ),
+                ),
+                if (isOnCooldown) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Хэтэрхий олон оролдлого эсвэл код аль хэдийн явуулсан.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ],
             ),
           ),

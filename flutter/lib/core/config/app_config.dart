@@ -1,22 +1,23 @@
+import 'package:event_app/core/config/env.dart';
+
 // App configuration from dart-define environment variables.
 //
 // Pass values at build/run time:
 //   flutter run \
 //     --dart-define=SUPABASE_URL=https://xxx.supabase.co \
-//     --dart-define=SUPABASE_ANON_KEY=eyJ... \
-//     --dart-define=APP_URL=https://your-app.vercel.app
+//     --dart-define=SUPABASE_ANON_KEY=eyJ...
 
 class AppConfig {
   AppConfig._();
 
   static const supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://your-project.supabase.co',
+    defaultValue: Env.supabaseUrl,
   );
 
   static const supabaseAnonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
-    defaultValue: '',
+    defaultValue: Env.supabaseAnonKey,
   );
 
   static const appUrl = String.fromEnvironment(
@@ -25,8 +26,7 @@ class AppConfig {
   );
 
   /// Returns true when the app has been configured with real credentials.
-  /// False when running with default/placeholder values.
   static bool get isConfigured =>
       supabaseUrl != 'https://your-project.supabase.co' &&
-      supabaseAnonKey.isNotEmpty;
+      supabaseAnonKey != 'dummy_key';
 }

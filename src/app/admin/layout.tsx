@@ -6,6 +6,14 @@ export const dynamic = "force-dynamic";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Overview" },
+  { href: "/admin/users", label: "Users" },
+  { href: "/admin/programme", label: "Programme" },
+  { href: "/admin/speakers", label: "Speakers" },
+  { href: "/admin/venues", label: "Venues" },
+  { href: "/admin/announcements", label: "Announcements" },
+  { href: "/admin/services", label: "Services" },
+  { href: "/admin/services/vendors", label: "Vendors" },
+  { href: "/admin/map/pois", label: "Map POIs" },
   { href: "/admin/organizations", label: "Organizations" },
   { href: "/admin/billing", label: "Billing" },
   { href: "/admin/jobs", label: "Jobs" },

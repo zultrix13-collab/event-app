@@ -25,9 +25,19 @@ import 'package:event_app/features/services/screens/restaurant_screen.dart';
 import 'package:event_app/features/services/screens/services_screen.dart';
 import 'package:event_app/features/services/screens/shop_screen.dart';
 import 'package:event_app/features/services/screens/topup_screen.dart';
+import 'package:event_app/features/services/screens/order_confirmation_screen.dart';
+import 'package:event_app/features/services/screens/orders_screen.dart';
 import 'package:event_app/features/services/screens/transport_screen.dart';
+import 'package:event_app/features/services/screens/vendor_screen.dart';
 import 'package:event_app/features/services/screens/wallet_screen.dart';
 import 'package:event_app/features/profile/screens/settings_screen.dart';
+
+// GoRouter-ийг auth state өөрчлөгдөх бүрт refresh хийх ChangeNotifier
+class _AuthNotifierListenable extends ChangeNotifier {
+  _AuthNotifierListenable(Ref ref) {
+    ref.listen<AuthState>(authProvider, (_, __) => notifyListeners());
+  }
+}
 
 // Auth routes that live OUTSIDE the shell
 const _authRoutes = {'/login', '/verify', '/setup-org', '/pending-approval', '/apply-vip'};
@@ -37,11 +47,13 @@ const _authRoutes = {'/login', '/verify', '/setup-org', '/pending-approval', '/a
 // ---------------------------------------------------------------------------
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final listenable = _AuthNotifierListenable(ref);
 
   return GoRouter(
     initialLocation: '/login',
+    refreshListenable: listenable,
     redirect: (context, state) {
+      final authState = ref.read(authProvider);
       final isLoggedIn = authState.isAuthenticated;
       final isLoading = authState.status == AuthStatus.loading;
       final currentPath = state.matchedLocation;
@@ -59,8 +71,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      // Нэвтэрсэн бол auth route-аас гарах
-      if (isLoggedIn && (currentPath == '/login' || currentPath == '/verify')) {
+      // Нэвтэрсэн бол auth route-аас гарах (verify route-оос гарахгүй!)
+      if (isLoggedIn && currentPath == '/login') {
         return '/home';
       }
 
@@ -204,6 +216,20 @@ final routerProvider = Provider<GoRouter>((ref) {
                 GoRoute(
                   path: 'lost-found',
                   builder: (_, __) => const LostFoundScreen(),
+                ),
+                GoRoute(
+                  path: 'vendors',
+                  builder: (_, __) => const VendorScreen(),
+                ),
+                GoRoute(
+                  path: 'shop/orders',
+                  builder: (_, __) => const OrdersScreen(),
+                ),
+                GoRoute(
+                  path: 'shop/order-confirmation/:orderId',
+                  builder: (_, state) => OrderConfirmationScreen(
+                    orderId: state.pathParameters['orderId']!,
+                  ),
                 ),
               ],
             ),

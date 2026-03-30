@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getSystemAdminsDirectory } from "@/modules/admin/data";
 import { PageHeader } from "@/components/ui";
+import { MfaSetupSection } from "./MfaSetupSection";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,9 @@ export default async function AdminSettingsPage() {
           }
         />
       </div>
+
+      {/* MFA / 2FA Setup */}
+      <MfaSetupSection />
 
       {admins.length === 0 ? (
         <p className="ui-text-muted">

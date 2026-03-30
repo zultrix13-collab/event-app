@@ -49,5 +49,16 @@
 	<string>Дижитал үнэмлэхийг NFC-ээр унших/бичихэд ашиглана</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Биометр нэвтрэлт хийхэд ашиглана</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>mn.devgrafx.eventapp</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
