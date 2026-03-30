@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:event_app/core/theme/app_theme.dart';
 import 'package:event_app/features/auth/providers/auth_provider.dart';
-
 
 class VerifyScreen extends ConsumerStatefulWidget {
   const VerifyScreen({super.key, required this.email});
-
   final String email;
-
   @override
   ConsumerState<VerifyScreen> createState() => _VerifyScreenState();
 }
@@ -16,56 +14,57 @@ class VerifyScreen extends ConsumerStatefulWidget {
 class _VerifyScreenState extends ConsumerState<VerifyScreen> {
   final _otpController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final _focusNode = FocusNode();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _focusNode.requestFocus());
+  }
 
   @override
   void dispose() {
     _otpController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
   Future<void> _verify() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
     await ref.read(authProvider.notifier).verifyOtp(
           email: widget.email,
           token: _otpController.text.trim(),
         );
-
     if (!mounted) return;
     setState(() => _isLoading = false);
-
     final error = ref.read(authProvider).error;
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: Colors.red),
+        SnackBar(content: Text(error), backgroundColor: AppTheme.danger),
       );
     }
-    // Auth state өөрчлөгдвөл router автоматаар redirect хийнэ
   }
 
   Future<void> _resendOtp() async {
     final cooldown = ref.read(authProvider).cooldownSeconds;
     if (cooldown > 0) return;
-
     setState(() => _isLoading = true);
     await ref.read(authProvider.notifier).sendOtp(widget.email);
-
     if (!mounted) return;
     setState(() => _isLoading = false);
-
     final authState = ref.read(authProvider);
     final error = authState.otpError ?? authState.error;
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: Colors.red),
+        SnackBar(content: Text(error), backgroundColor: AppTheme.danger),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('OTP дахин илгээлээ'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppTheme.success,
         ),
       );
     }
@@ -73,96 +72,266 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch cooldown from provider
     final cooldown = ref.watch(authProvider).cooldownSeconds;
     final isOnCooldown = cooldown > 0;
+    final size = MediaQuery.of(context).size;
+    final otpValue = _otpController.text;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: BackButton(onPressed: () => context.go('/login')),
+      body: Stack(
+        children: [
+          Container(decoration: const BoxDecoration(gradient: AppTheme.gradientHero)),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  const SizedBox(height: 32),
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.mark_email_read_outlined,
+                      size: 36,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'OTP Баталгаажуулах',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.email,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 13,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: size.height * 0.68,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(AppTheme.radiusXXL),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Код оруулах',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1A1A2E),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '8 оронтой OTP кодыг оруулна уу',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                      const SizedBox(height: 32),
+                      // PIN boxes overlay with hidden input
+                      GestureDetector(
+                        onTap: () => _focusNode.requestFocus(),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            _OtpBoxes(value: otpValue, isLoading: _isLoading),
+                            // Hidden TextFormField
+                            Opacity(
+                              opacity: 0,
+                              child: SizedBox(
+                                height: 52,
+                                child: TextFormField(
+                                  controller: _otpController,
+                                  focusNode: _focusNode,
+                                  keyboardType: TextInputType.number,
+                                  maxLength: 8,
+                                  decoration: const InputDecoration(counterText: ''),
+                                  onChanged: (v) {
+                                    setState(() {});
+                                    if (v.length == 8) _verify();
+                                  },
+                                  validator: (v) {
+                                    if (v == null || v.length < 6) {
+                                      return 'OTP кодоо бүрэн оруулна уу';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      _GradientButton(
+                        onPressed: (_isLoading || otpValue.length < 6) ? null : _verify,
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text('Баталгаажуулах'),
+                      ),
+                      const SizedBox(height: 16),
+                      TextButton(
+                        onPressed: (_isLoading || isOnCooldown) ? null : _resendOtp,
+                        child: Text(
+                          isOnCooldown
+                              ? 'Дахин илгээх ($cooldown с)'
+                              : 'Дахин илгээх',
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _isLoading ? null : () => context.go('/login'),
+                        child: Text(
+                          'Буцах',
+                          style: TextStyle(color: Colors.grey[500]),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Icon(Icons.mark_email_read_outlined, size: 64),
-                const SizedBox(height: 16),
-                Text(
-                  'OTP шалгах',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${widget.email} хаяг руу OTP илгээлээ',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 40),
-                TextFormField(
-                  controller: _otpController,
-                  keyboardType: TextInputType.number,
-                  maxLength: 8,
-                  textAlign: TextAlign.center,
-                  enabled: !_isLoading,
-                  style: Theme.of(context).textTheme.headlineMedium,
-                  decoration: const InputDecoration(
-                    labelText: 'OTP код',
-                    hintText: '00000000',
-                    counterText: '',
-                  ),
-                  validator: (v) {
-                    if (v == null || v.length < 6) return 'OTP кодоо бүрэн оруулна уу';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _verify,
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Баталгаажуулах'),
-                ),
-                const SizedBox(height: 16),
+    );
+  }
+}
 
-                // Resend OTP button with cooldown
-                TextButton(
-                  onPressed: (_isLoading || isOnCooldown) ? null : _resendOtp,
-                  child: Text(
-                    isOnCooldown
-                        ? 'Дахин илгээх (${cooldown}с)'
-                        : 'Дахин илгээх',
-                    style: TextStyle(
-                      color: isOnCooldown
-                          ? Theme.of(context).colorScheme.onSurfaceVariant
-                          : Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                ),
+class _OtpBoxes extends StatelessWidget {
+  final String value;
+  final bool isLoading;
+  const _OtpBoxes({required this.value, required this.isLoading});
 
-                TextButton(
-                  onPressed: _isLoading ? null : () => context.go('/login'),
-                  child: Text(
-                    'Буцах',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(8, (i) {
+        final filled = i < value.length;
+        final active = i == value.length && !isLoading;
+        return AnimatedContainer(
+          duration: AppTheme.durationFast,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          width: 34,
+          height: 48,
+          decoration: BoxDecoration(
+            color: filled
+                ? AppTheme.primary.withValues(alpha: 0.08)
+                : const Color(0xFFF1F2FD),
+            borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+            border: Border.all(
+              color: active
+                  ? AppTheme.primary
+                  : (filled
+                      ? AppTheme.primary.withValues(alpha: 0.4)
+                      : Colors.transparent),
+              width: active ? 2 : 1,
+            ),
+          ),
+          child: Center(
+            child: filled
+                ? Text(
+                    value[i],
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primary,
                     ),
-                  ),
+                  )
+                : (active
+                    ? Container(
+                        width: 1.5,
+                        height: 22,
+                        color: AppTheme.primary,
+                      )
+                    : null),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class _GradientButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final Widget child;
+  const _GradientButton({required this.onPressed, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled = onPressed == null;
+    return AnimatedOpacity(
+      opacity: disabled ? 0.6 : 1.0,
+      duration: AppTheme.durationFast,
+      child: Container(
+        height: 52,
+        decoration: disabled
+            ? BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+              )
+            : AppTheme.gradientButtonDecoration(),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+            child: Center(
+              child: DefaultTextStyle(
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                 ),
-              ],
+                child: child,
+              ),
             ),
           ),
         ),
