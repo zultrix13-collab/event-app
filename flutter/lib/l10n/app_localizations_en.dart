@@ -120,28 +120,69 @@ class AppLocalizationsEn extends AppLocalizations {
   String get version => 'Version';
 
   @override
+  String get today => 'Today';
+
+  @override
+  String get upcoming => 'Upcoming';
+
+  @override
+  String get comingSoon => 'Coming Soon';
+
+  @override
+  String get loginAppName => 'EVENT APP';
+
+  @override
+  String get loginTagline => 'Digital Badge';
+
+  @override
   String get loginTitle => 'Sign In';
 
   @override
   String get loginSubtitle => 'Enter your email to continue';
 
   @override
-  String get emailHint => 'Email address';
+  String get emailLabel => 'Email address';
 
   @override
-  String get sendCode => 'Send Code';
+  String get emailHint => 'name@example.com';
+
+  @override
+  String get emailRequired => 'Please enter your email';
+
+  @override
+  String get emailInvalid => 'Please enter a valid email';
+
+  @override
+  String get sendOtp => 'Send OTP';
+
+  @override
+  String get resendOtp => 'Resend Code';
+
+  @override
+  String resendOtpCooldown(int seconds) {
+    return 'Resend (${seconds}s)';
+  }
+
+  @override
+  String get orDivider => 'or';
+
+  @override
+  String get signInWithGoogle => 'Sign in with Google';
 
   @override
   String get verifyTitle => 'Enter Code';
 
   @override
-  String get verifySubtitle => 'Enter the code sent to your email';
+  String get verifySubtitle => 'Enter the 8-digit OTP code';
 
   @override
-  String get codeHint => '6-digit code';
+  String get verifyButton => 'Verify';
 
   @override
-  String get verify => 'Verify';
+  String get verifyBack => 'Back';
+
+  @override
+  String get otpSentAgain => 'OTP sent again';
 
   @override
   String get pendingApprovalTitle => 'Pending Approval';
@@ -151,11 +192,87 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your registration is pending admin approval.';
 
   @override
-  String get today => 'Today';
+  String get pendingApprovalNote =>
+      'You will be able to sign in after approval.';
 
   @override
-  String get upcoming => 'Upcoming';
+  String get welcomeGreeting => 'Hello 👋';
 
   @override
-  String get comingSoon => 'Coming Soon';
+  String get quickAccess => 'Quick Access';
+
+  @override
+  String get nextSession => 'Next Session';
+
+  @override
+  String get eventCountdown => 'Until Event';
+
+  @override
+  String get countdownDays => 'days';
+
+  @override
+  String get countdownHours => 'hrs';
+
+  @override
+  String get countdownMins => 'min';
+
+  @override
+  String get openingCeremony => 'Opening Ceremony';
+
+  @override
+  String get navHome => 'Home';
+
+  @override
+  String get navProgramme => 'Programme';
+
+  @override
+  String get navMap => 'Map';
+
+  @override
+  String get navServices => 'Services';
+
+  @override
+  String get navProfile => 'Profile';
+
+  @override
+  String get profileSettings => 'Settings';
+
+  @override
+  String get profileNotifications => 'Notifications';
+
+  @override
+  String get profileLanguage => 'Change Language';
+
+  @override
+  String get profileSignOut => 'Sign Out';
+
+  @override
+  String get profileSessions => 'Sessions';
+
+  @override
+  String get profileBadges => 'Badges';
+
+  @override
+  String get profileSteps => 'Steps';
+
+  @override
+  String get roleSuperAdmin => 'Super Admin';
+
+  @override
+  String get roleSpecialist => 'Specialist';
+
+  @override
+  String get roleVip => 'VIP';
+
+  @override
+  String get roleParticipant => 'Participant';
+
+  @override
+  String get languageMongolian => 'Монгол';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get selectLanguage => 'Select Language';
 }

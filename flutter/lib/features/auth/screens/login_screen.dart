@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:event_app/core/theme/app_theme.dart';
 import 'package:event_app/features/auth/providers/auth_provider.dart';
+import 'package:event_app/l10n/app_localizations.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -77,6 +78,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cooldown = ref.watch(authProvider).cooldownSeconds;
     final isOnCooldown = cooldown > 0;
     final size = MediaQuery.of(context).size;
@@ -117,9 +119,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'АРГА ХЭМЖАА',
-                    style: TextStyle(
+                  Text(
+                    l10n.loginAppName,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
@@ -128,7 +130,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Дижитал үнэмлэх',
+                    l10n.loginTagline,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 14,
@@ -172,9 +174,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           ),
                         ),
                         const SizedBox(height: 24),
-                        const Text(
-                          'Нэвтрэх',
-                          style: TextStyle(
+                        Text(
+                          l10n.loginTitle,
+                          style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF1A1A2E),
@@ -182,7 +184,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Email хаягаараа нэвтэрнэ үү',
+                          l10n.loginSubtitle,
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
@@ -193,14 +195,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           enabled: !_isLoading,
-                          decoration: const InputDecoration(
-                            labelText: 'Email хаяг',
-                            hintText: 'name@example.com',
-                            prefixIcon: Icon(Icons.email_outlined),
+                          decoration: InputDecoration(
+                            labelText: l10n.emailLabel,
+                            hintText: l10n.emailHint,
+                            prefixIcon: const Icon(Icons.email_outlined),
                           ),
                           validator: (v) {
-                            if (v == null || v.isEmpty) return 'Email оруулна уу';
-                            if (!v.contains('@')) return 'Зөв email оруулна уу';
+                            if (v == null || v.isEmpty) return l10n.emailRequired;
+                            if (!v.contains('@')) return l10n.emailInvalid;
                             return null;
                           },
                         ),
@@ -218,8 +220,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 )
                               : Text(
                                   isOnCooldown
-                                      ? 'Дахин илгээх ($cooldown с)'
-                                      : 'OTP илгээх',
+                                      ? l10n.resendOtpCooldown(cooldown)
+                                      : l10n.sendOtp,
                                 ),
                         ),
                         const SizedBox(height: 24),
@@ -229,7 +231,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 16),
                               child: Text(
-                                'эсвэл',
+                                l10n.orDivider,
                                 style: TextStyle(
                                   color: Colors.grey[500],
                                   fontSize: 13,
@@ -243,7 +245,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         OutlinedButton.icon(
                           onPressed: _isLoading ? null : _signInWithGoogle,
                           icon: const _GoogleIcon(),
-                          label: const Text('Google-ээр нэвтрэх'),
+                          label: Text(l10n.signInWithGoogle),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             side: BorderSide(color: Colors.grey[300]!),

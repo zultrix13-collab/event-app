@@ -320,66 +320,6 @@ abstract class AppLocalizations {
   /// **'Хувилбар'**
   String get version;
 
-  /// No description provided for @loginTitle.
-  ///
-  /// In mn, this message translates to:
-  /// **'Нэвтрэх'**
-  String get loginTitle;
-
-  /// No description provided for @loginSubtitle.
-  ///
-  /// In mn, this message translates to:
-  /// **'И-мэйл хаягаараа нэвтэрнэ үү'**
-  String get loginSubtitle;
-
-  /// No description provided for @emailHint.
-  ///
-  /// In mn, this message translates to:
-  /// **'И-мэйл хаяг'**
-  String get emailHint;
-
-  /// No description provided for @sendCode.
-  ///
-  /// In mn, this message translates to:
-  /// **'Код илгээх'**
-  String get sendCode;
-
-  /// No description provided for @verifyTitle.
-  ///
-  /// In mn, this message translates to:
-  /// **'Код оруулах'**
-  String get verifyTitle;
-
-  /// No description provided for @verifySubtitle.
-  ///
-  /// In mn, this message translates to:
-  /// **'И-мэйл рүү илгээсэн кодыг оруулна уу'**
-  String get verifySubtitle;
-
-  /// No description provided for @codeHint.
-  ///
-  /// In mn, this message translates to:
-  /// **'6 оронтой код'**
-  String get codeHint;
-
-  /// No description provided for @verify.
-  ///
-  /// In mn, this message translates to:
-  /// **'Баталгаажуулах'**
-  String get verify;
-
-  /// No description provided for @pendingApprovalTitle.
-  ///
-  /// In mn, this message translates to:
-  /// **'Хүлээгдэж байна'**
-  String get pendingApprovalTitle;
-
-  /// No description provided for @pendingApprovalMessage.
-  ///
-  /// In mn, this message translates to:
-  /// **'Та бүртгэлийн хүсэлт илгээсэн байна. Администратор шалгаж баталгаажуулна.'**
-  String get pendingApprovalMessage;
-
   /// No description provided for @today.
   ///
   /// In mn, this message translates to:
@@ -397,6 +337,294 @@ abstract class AppLocalizations {
   /// In mn, this message translates to:
   /// **'Удахгүй нээгдэнэ'**
   String get comingSoon;
+
+  /// No description provided for @loginAppName.
+  ///
+  /// In mn, this message translates to:
+  /// **'АРГА ХЭМЖАА'**
+  String get loginAppName;
+
+  /// No description provided for @loginTagline.
+  ///
+  /// In mn, this message translates to:
+  /// **'Дижитал үнэмлэх'**
+  String get loginTagline;
+
+  /// No description provided for @loginTitle.
+  ///
+  /// In mn, this message translates to:
+  /// **'Нэвтрэх'**
+  String get loginTitle;
+
+  /// No description provided for @loginSubtitle.
+  ///
+  /// In mn, this message translates to:
+  /// **'Email хаягаараа нэвтэрнэ үү'**
+  String get loginSubtitle;
+
+  /// No description provided for @emailLabel.
+  ///
+  /// In mn, this message translates to:
+  /// **'Email хаяг'**
+  String get emailLabel;
+
+  /// No description provided for @emailHint.
+  ///
+  /// In mn, this message translates to:
+  /// **'name@example.com'**
+  String get emailHint;
+
+  /// No description provided for @emailRequired.
+  ///
+  /// In mn, this message translates to:
+  /// **'Email оруулна уу'**
+  String get emailRequired;
+
+  /// No description provided for @emailInvalid.
+  ///
+  /// In mn, this message translates to:
+  /// **'Зөв email оруулна уу'**
+  String get emailInvalid;
+
+  /// No description provided for @sendOtp.
+  ///
+  /// In mn, this message translates to:
+  /// **'OTP илгээх'**
+  String get sendOtp;
+
+  /// No description provided for @resendOtp.
+  ///
+  /// In mn, this message translates to:
+  /// **'Дахин илгээх'**
+  String get resendOtp;
+
+  /// No description provided for @resendOtpCooldown.
+  ///
+  /// In mn, this message translates to:
+  /// **'Дахин илгээх ({seconds}с)'**
+  String resendOtpCooldown(int seconds);
+
+  /// No description provided for @orDivider.
+  ///
+  /// In mn, this message translates to:
+  /// **'эсвэл'**
+  String get orDivider;
+
+  /// No description provided for @signInWithGoogle.
+  ///
+  /// In mn, this message translates to:
+  /// **'Google-ээр нэвтрэх'**
+  String get signInWithGoogle;
+
+  /// No description provided for @verifyTitle.
+  ///
+  /// In mn, this message translates to:
+  /// **'Код оруулах'**
+  String get verifyTitle;
+
+  /// No description provided for @verifySubtitle.
+  ///
+  /// In mn, this message translates to:
+  /// **'8 оронтой OTP кодыг оруулна уу'**
+  String get verifySubtitle;
+
+  /// No description provided for @verifyButton.
+  ///
+  /// In mn, this message translates to:
+  /// **'Баталгаажуулах'**
+  String get verifyButton;
+
+  /// No description provided for @verifyBack.
+  ///
+  /// In mn, this message translates to:
+  /// **'Буцах'**
+  String get verifyBack;
+
+  /// No description provided for @otpSentAgain.
+  ///
+  /// In mn, this message translates to:
+  /// **'OTP дахин илгээлээ'**
+  String get otpSentAgain;
+
+  /// No description provided for @pendingApprovalTitle.
+  ///
+  /// In mn, this message translates to:
+  /// **'Хүлээгдэж байна'**
+  String get pendingApprovalTitle;
+
+  /// No description provided for @pendingApprovalMessage.
+  ///
+  /// In mn, this message translates to:
+  /// **'Та бүртгэлийн хүсэлт илгээсэн байна. Администратор шалгаж баталгаажуулна.'**
+  String get pendingApprovalMessage;
+
+  /// No description provided for @pendingApprovalNote.
+  ///
+  /// In mn, this message translates to:
+  /// **'Баталгаажсаны дараа та нэвтрэх боломжтой болно.'**
+  String get pendingApprovalNote;
+
+  /// No description provided for @welcomeGreeting.
+  ///
+  /// In mn, this message translates to:
+  /// **'Сайн байна уу 👋'**
+  String get welcomeGreeting;
+
+  /// No description provided for @quickAccess.
+  ///
+  /// In mn, this message translates to:
+  /// **'Товч хандах'**
+  String get quickAccess;
+
+  /// No description provided for @nextSession.
+  ///
+  /// In mn, this message translates to:
+  /// **'Дараагийн хичээл'**
+  String get nextSession;
+
+  /// No description provided for @eventCountdown.
+  ///
+  /// In mn, this message translates to:
+  /// **'Арга хэмжаа хүртэл'**
+  String get eventCountdown;
+
+  /// No description provided for @countdownDays.
+  ///
+  /// In mn, this message translates to:
+  /// **'өдөр'**
+  String get countdownDays;
+
+  /// No description provided for @countdownHours.
+  ///
+  /// In mn, this message translates to:
+  /// **'цаг'**
+  String get countdownHours;
+
+  /// No description provided for @countdownMins.
+  ///
+  /// In mn, this message translates to:
+  /// **'мин'**
+  String get countdownMins;
+
+  /// No description provided for @openingCeremony.
+  ///
+  /// In mn, this message translates to:
+  /// **'Нээлтийн ёслол'**
+  String get openingCeremony;
+
+  /// No description provided for @navHome.
+  ///
+  /// In mn, this message translates to:
+  /// **'Нүүр'**
+  String get navHome;
+
+  /// No description provided for @navProgramme.
+  ///
+  /// In mn, this message translates to:
+  /// **'Хөтөлбөр'**
+  String get navProgramme;
+
+  /// No description provided for @navMap.
+  ///
+  /// In mn, this message translates to:
+  /// **'Газрын зураг'**
+  String get navMap;
+
+  /// No description provided for @navServices.
+  ///
+  /// In mn, this message translates to:
+  /// **'Үйлчилгээ'**
+  String get navServices;
+
+  /// No description provided for @navProfile.
+  ///
+  /// In mn, this message translates to:
+  /// **'Профайл'**
+  String get navProfile;
+
+  /// No description provided for @profileSettings.
+  ///
+  /// In mn, this message translates to:
+  /// **'Тохиргоо'**
+  String get profileSettings;
+
+  /// No description provided for @profileNotifications.
+  ///
+  /// In mn, this message translates to:
+  /// **'Мэдэгдлүүд'**
+  String get profileNotifications;
+
+  /// No description provided for @profileLanguage.
+  ///
+  /// In mn, this message translates to:
+  /// **'Хэл солих'**
+  String get profileLanguage;
+
+  /// No description provided for @profileSignOut.
+  ///
+  /// In mn, this message translates to:
+  /// **'Гарах'**
+  String get profileSignOut;
+
+  /// No description provided for @profileSessions.
+  ///
+  /// In mn, this message translates to:
+  /// **'Хичээл'**
+  String get profileSessions;
+
+  /// No description provided for @profileBadges.
+  ///
+  /// In mn, this message translates to:
+  /// **'Медал'**
+  String get profileBadges;
+
+  /// No description provided for @profileSteps.
+  ///
+  /// In mn, this message translates to:
+  /// **'Алхам'**
+  String get profileSteps;
+
+  /// No description provided for @roleSuperAdmin.
+  ///
+  /// In mn, this message translates to:
+  /// **'Супер Админ'**
+  String get roleSuperAdmin;
+
+  /// No description provided for @roleSpecialist.
+  ///
+  /// In mn, this message translates to:
+  /// **'Мэргэжилтэн'**
+  String get roleSpecialist;
+
+  /// No description provided for @roleVip.
+  ///
+  /// In mn, this message translates to:
+  /// **'VIP'**
+  String get roleVip;
+
+  /// No description provided for @roleParticipant.
+  ///
+  /// In mn, this message translates to:
+  /// **'Оролцогч'**
+  String get roleParticipant;
+
+  /// No description provided for @languageMongolian.
+  ///
+  /// In mn, this message translates to:
+  /// **'Монгол'**
+  String get languageMongolian;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In mn, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
+  /// No description provided for @selectLanguage.
+  ///
+  /// In mn, this message translates to:
+  /// **'Хэл сонгох'**
+  String get selectLanguage;
 }
 
 class _AppLocalizationsDelegate

@@ -4,12 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:event_app/core/theme/app_theme.dart';
 import 'package:event_app/features/auth/providers/auth_provider.dart';
 import 'package:event_app/features/notifications/providers/notifications_provider.dart';
+import 'package:event_app/l10n/app_localizations.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final user = ref.watch(currentUserProvider);
     final metadata = user?.userMetadata ?? {};
     final fullName = metadata['full_name'] as String? ??
@@ -25,11 +27,15 @@ class HomeScreen extends ConsumerWidget {
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
-            child: _HeroSection(fullName: fullName, hasEmergency: hasEmergency),
+            child: _HeroSection(
+              fullName: fullName,
+              hasEmergency: hasEmergency,
+              l10n: l10n,
+            ),
           ),
-          const SliverPadding(
-            padding: EdgeInsets.fromLTRB(16, 20, 16, 0),
-            sliver: SliverToBoxAdapter(child: _SectionTitle('Товч хандах')),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+            sliver: SliverToBoxAdapter(child: _SectionTitle(l10n.quickAccess)),
           ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -41,48 +47,48 @@ class HomeScreen extends ConsumerWidget {
                 childAspectRatio: 1.3,
               ),
               delegate: SliverChildListDelegate([
-                const _QuickActionCard(
-                  label: 'Хөтөлбөр',
+                _QuickActionCard(
+                  label: l10n.programme,
                   icon: Icons.calendar_month_rounded,
                   route: '/programme',
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
                   ),
                 ),
-                const _QuickActionCard(
-                  label: 'Газрын зураг',
+                _QuickActionCard(
+                  label: l10n.map,
                   icon: Icons.map_rounded,
                   route: '/map',
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     colors: [Color(0xFF10B981), Color(0xFF059669)],
                   ),
                 ),
-                const _QuickActionCard(
-                  label: 'Үйлчилгээ',
+                _QuickActionCard(
+                  label: l10n.services,
                   icon: Icons.storefront_rounded,
                   route: '/services',
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
                   ),
                 ),
-                const _QuickActionCard(
-                  label: 'Ногоон',
+                _QuickActionCard(
+                  label: l10n.green,
                   icon: Icons.eco_rounded,
                   route: '/green',
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     colors: [Color(0xFF06B6D4), Color(0xFF0284C7)],
                   ),
                 ),
               ]),
             ),
           ),
-          const SliverPadding(
-            padding: EdgeInsets.fromLTRB(16, 20, 16, 0),
-            sliver: SliverToBoxAdapter(child: _SectionTitle('Дараагийн хичээл')),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+            sliver: SliverToBoxAdapter(child: _SectionTitle(l10n.nextSession)),
           ),
-          const SliverPadding(
-            padding: EdgeInsets.fromLTRB(16, 12, 16, 24),
-            sliver: SliverToBoxAdapter(child: _NextSessionCard()),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            sliver: SliverToBoxAdapter(child: _NextSessionCard(l10n: l10n)),
           ),
         ],
       ),
@@ -109,7 +115,12 @@ class _SectionTitle extends StatelessWidget {
 class _HeroSection extends StatelessWidget {
   final String fullName;
   final bool hasEmergency;
-  const _HeroSection({required this.fullName, required this.hasEmergency});
+  final AppLocalizations l10n;
+  const _HeroSection({
+    required this.fullName,
+    required this.hasEmergency,
+    required this.l10n,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +146,7 @@ class _HeroSection extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Сайн байна уу 👋',
+                          l10n.welcomeGreeting,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.85),
                             fontSize: 14,
@@ -183,7 +194,7 @@ class _HeroSection extends StatelessWidget {
                 ],
               ),
               const Spacer(),
-              const _CountdownRow(),
+              _CountdownRow(l10n: l10n),
             ],
           ),
         ),
@@ -193,7 +204,9 @@ class _HeroSection extends StatelessWidget {
 }
 
 class _CountdownRow extends StatelessWidget {
-  const _CountdownRow();
+  final AppLocalizations l10n;
+  const _CountdownRow({required this.l10n});
+
   @override
   Widget build(BuildContext context) {
     final event = DateTime(2026, 5, 15);
@@ -205,11 +218,11 @@ class _CountdownRow extends StatelessWidget {
 
     return Row(
       children: [
-        _TimeChip('$days', 'өдөр'),
+        _TimeChip('$days', l10n.countdownDays),
         const SizedBox(width: 8),
-        _TimeChip('$hours', 'цаг'),
+        _TimeChip('$hours', l10n.countdownHours),
         const SizedBox(width: 8),
-        _TimeChip('$mins', 'мин'),
+        _TimeChip('$mins', l10n.countdownMins),
         const Spacer(),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -217,9 +230,9 @@ class _CountdownRow extends StatelessWidget {
             color: Colors.white.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Text(
-            'Арга хэмжаа хүртэл',
-            style: TextStyle(color: Colors.white, fontSize: 11),
+          child: Text(
+            l10n.eventCountdown,
+            style: const TextStyle(color: Colors.white, fontSize: 11),
           ),
         ),
       ],
@@ -319,7 +332,9 @@ class _QuickActionCard extends StatelessWidget {
 }
 
 class _NextSessionCard extends StatelessWidget {
-  const _NextSessionCard();
+  final AppLocalizations l10n;
+  const _NextSessionCard({required this.l10n});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -355,20 +370,20 @@ class _NextSessionCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Нээлтийн ёслол',
-                  style: TextStyle(
+                  l10n.openingCeremony,
+                  style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF1A1A2E),
                   ),
                 ),
-                SizedBox(height: 4),
-                Row(
+                const SizedBox(height: 4),
+                const Row(
                   children: [
                     Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF9CA3AF)),
                     SizedBox(width: 4),

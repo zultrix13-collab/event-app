@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:event_app/core/theme/app_theme.dart';
 import 'package:event_app/features/auth/providers/auth_provider.dart';
+import 'package:event_app/l10n/app_localizations.dart';
 
 class VerifyScreen extends ConsumerStatefulWidget {
   const VerifyScreen({super.key, required this.email});
@@ -61,9 +62,10 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
         SnackBar(content: Text(error), backgroundColor: AppTheme.danger),
       );
     } else {
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('OTP дахин илгээлээ'),
+        SnackBar(
+          content: Text(l10n.otpSentAgain),
           backgroundColor: AppTheme.success,
         ),
       );
@@ -72,6 +74,7 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cooldown = ref.watch(authProvider).cooldownSeconds;
     final isOnCooldown = cooldown > 0;
     final size = MediaQuery.of(context).size;
@@ -102,9 +105,9 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'OTP Баталгаажуулах',
-                    style: TextStyle(
+                  Text(
+                    l10n.verifyTitle,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
@@ -154,9 +157,9 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      const Text(
-                        'Код оруулах',
-                        style: TextStyle(
+                      Text(
+                        l10n.verifyTitle,
+                        style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF1A1A2E),
@@ -164,7 +167,7 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '8 оронтой OTP кодыг оруулна уу',
+                        l10n.verifySubtitle,
                         style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 32),
@@ -214,21 +217,21 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text('Баталгаажуулах'),
+                            : Text(l10n.verifyButton),
                       ),
                       const SizedBox(height: 16),
                       TextButton(
                         onPressed: (_isLoading || isOnCooldown) ? null : _resendOtp,
                         child: Text(
                           isOnCooldown
-                              ? 'Дахин илгээх ($cooldown с)'
-                              : 'Дахин илгээх',
+                              ? l10n.resendOtpCooldown(cooldown)
+                              : l10n.resendOtp,
                         ),
                       ),
                       TextButton(
                         onPressed: _isLoading ? null : () => context.go('/login'),
                         child: Text(
-                          'Буцах',
+                          l10n.verifyBack,
                           style: TextStyle(color: Colors.grey[500]),
                         ),
                       ),

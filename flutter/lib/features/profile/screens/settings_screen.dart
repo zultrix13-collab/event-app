@@ -36,11 +36,16 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 8),
-          _LanguageToggle(isMn: isMn, onChanged: (mn) {
-            ref.read(localeProvider.notifier).setLocale(
-              Locale(mn ? 'mn' : 'en'),
-            );
-          }),
+          _LanguageToggle(
+            isMn: isMn,
+            mnLabel: l10n.languageMongolian,
+            enLabel: l10n.languageEnglish,
+            onChanged: (mn) {
+              ref.read(localeProvider.notifier).setLocale(
+                Locale(mn ? 'mn' : 'en'),
+              );
+            },
+          ),
           const SizedBox(height: 24),
 
           // --- Theme ---
@@ -86,9 +91,16 @@ class SettingsScreen extends ConsumerWidget {
 // ---------------------------------------------------------------------------
 
 class _LanguageToggle extends StatelessWidget {
-  const _LanguageToggle({required this.isMn, required this.onChanged});
+  const _LanguageToggle({
+    required this.isMn,
+    required this.mnLabel,
+    required this.enLabel,
+    required this.onChanged,
+  });
 
   final bool isMn;
+  final String mnLabel;
+  final String enLabel;
   final ValueChanged<bool> onChanged;
 
   @override
@@ -97,16 +109,16 @@ class _LanguageToggle extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: SegmentedButton<bool>(
-          segments: const [
+          segments: [
             ButtonSegment(
               value: true,
-              label: Text('🇲🇳  МН'),
-              icon: Icon(Icons.language),
+              label: Text('🇲🇳  $mnLabel'),
+              icon: const Icon(Icons.language),
             ),
             ButtonSegment(
               value: false,
-              label: Text('🇬🇧  EN'),
-              icon: Icon(Icons.language),
+              label: Text('🇬🇧  $enLabel'),
+              icon: const Icon(Icons.language),
             ),
           ],
           selected: {isMn},

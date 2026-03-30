@@ -78,15 +78,14 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   Widget _buildFloatingNav(BuildContext context) {
-    // Keep AppLocalizations available for future use
-    AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     final items = [
-      (icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Нүүр'),
-      (icon: Icons.calendar_month_outlined, activeIcon: Icons.calendar_month_rounded, label: 'Хөтөлбөр'),
-      (icon: Icons.map_outlined, activeIcon: Icons.map_rounded, label: 'Газрын зураг'),
-      (icon: Icons.store_outlined, activeIcon: Icons.storefront_rounded, label: 'Үйлчилгээ'),
-      (icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Профайл'),
+      (icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: l10n.navHome),
+      (icon: Icons.calendar_month_outlined, activeIcon: Icons.calendar_month_rounded, label: l10n.navProgramme),
+      (icon: Icons.map_outlined, activeIcon: Icons.map_rounded, label: l10n.navMap),
+      (icon: Icons.store_outlined, activeIcon: Icons.storefront_rounded, label: l10n.navServices),
+      (icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: l10n.navProfile),
     ];
     final current = widget.navigationShell.currentIndex;
 

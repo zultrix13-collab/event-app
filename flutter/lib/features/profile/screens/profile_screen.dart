@@ -5,6 +5,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:event_app/core/theme/app_theme.dart';
 import 'package:event_app/features/auth/providers/auth_provider.dart';
 import 'package:event_app/core/supabase/supabase_client.dart';
+import 'package:event_app/core/providers/locale_provider.dart';
+import 'package:event_app/l10n/app_localizations.dart';
 
 // ---------------------------------------------------------------------------
 // ProfileScreen — Хэрэглэгчийн профайл, QR ID карт, гарах
@@ -32,6 +34,7 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final user = ref.watch(currentUserProvider);
     final authState = ref.watch(authProvider);
 
@@ -60,12 +63,13 @@ class ProfileScreen extends ConsumerWidget {
               fullName: fullName,
               email: email,
               role: role,
+              l10n: l10n,
             ),
           ),
           // Stats row
-          const SliverPadding(
-            padding: EdgeInsets.fromLTRB(16, 20, 16, 0),
-            sliver: SliverToBoxAdapter(child: _StatsRow()),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+            sliver: SliverToBoxAdapter(child: _StatsRow(l10n: l10n)),
           ),
           // Digital ID
           if (hasDigitalId)
@@ -85,7 +89,9 @@ class ProfileScreen extends ConsumerWidget {
             sliver: SliverToBoxAdapter(
               child: _SettingsList(
                 role: role,
+                l10n: l10n,
                 onSignOut: () => _signOut(context, ref),
+                onLanguage: () => _showLanguageSheet(context, ref),
                 context: context,
               ),
             ),
@@ -100,6 +106,62 @@ class ProfileScreen extends ConsumerWidget {
     if (context.mounted) context.go('/login');
   }
 
+  void _showLanguageSheet(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final currentLocale = ref.read(localeProvider);
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag handle
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              l10n.selectLanguage,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 20),
+            // Mongolian option
+            _LanguageOption(
+              flag: '🇲🇳',
+              name: l10n.languageMongolian,
+              isSelected: currentLocale.languageCode == 'mn',
+              onTap: () {
+                ref.read(localeProvider.notifier).setLocale(const Locale('mn'));
+                Navigator.pop(ctx);
+              },
+            ),
+            const SizedBox(height: 12),
+            // English option
+            _LanguageOption(
+              flag: '🇬🇧',
+              name: l10n.languageEnglish,
+              isSelected: currentLocale.languageCode == 'en',
+              onTap: () {
+                ref.read(localeProvider.notifier).setLocale(const Locale('en'));
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _getInitials(String name) {
     final parts = name.trim().split(RegExp(r'\s+'));
     if (parts.isEmpty) return '?';
@@ -109,16 +171,18 @@ class ProfileScreen extends ConsumerWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Profile Header — gradient with initials avatar
+// Profile Header — gradient with initials avatar + language chip
 // ---------------------------------------------------------------------------
 
 class _ProfileHeader extends StatelessWidget {
   final String initials, fullName, email, role;
+  final AppLocalizations l10n;
   const _ProfileHeader({
     required this.initials,
     required this.fullName,
     required this.email,
     required this.role,
+    required this.l10n,
   });
 
   @override
@@ -137,11 +201,11 @@ class _ProfileHeader extends StatelessWidget {
           child: Column(
             children: [
               // App bar row
-              const Row(
+              Row(
                 children: [
                   Text(
-                    'Профайл',
-                    style: TextStyle(
+                    l10n.profile,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
@@ -204,7 +268,7 @@ class _ProfileHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              _RoleBadgeLight(role: role),
+              _RoleBadgeLight(role: role, l10n: l10n),
             ],
           ),
         ),
@@ -215,14 +279,16 @@ class _ProfileHeader extends StatelessWidget {
 
 class _RoleBadgeLight extends StatelessWidget {
   final String role;
-  const _RoleBadgeLight({required this.role});
+  final AppLocalizations l10n;
+  const _RoleBadgeLight({required this.role, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
     final (label, icon) = switch (role) {
-      'vip' => ('VIP', Icons.star_rounded),
-      'specialist' => ('Мэргэжилтэн', Icons.verified_rounded),
-      _ => ('Оролцогч', Icons.person_rounded),
+      'vip' => (l10n.roleVip, Icons.star_rounded),
+      'specialist' => (l10n.roleSpecialist, Icons.verified_rounded),
+      'super_admin' => (l10n.roleSuperAdmin, Icons.admin_panel_settings_rounded),
+      _ => (l10n.roleParticipant, Icons.person_rounded),
     };
 
     return Container(
@@ -256,17 +322,18 @@ class _RoleBadgeLight extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _StatsRow extends StatelessWidget {
-  const _StatsRow();
+  final AppLocalizations l10n;
+  const _StatsRow({required this.l10n});
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       children: [
-        Expanded(child: _StatCard(icon: Icons.event_available_rounded, value: '3', label: 'Хичээл')),
-        SizedBox(width: 10),
-        Expanded(child: _StatCard(icon: Icons.eco_rounded, value: '120', label: 'Алхам')),
-        SizedBox(width: 10),
-        Expanded(child: _StatCard(icon: Icons.star_rounded, value: '2', label: 'Бэйж')),
+        Expanded(child: _StatCard(icon: Icons.event_available_rounded, value: '3', label: l10n.profileSessions)),
+        const SizedBox(width: 10),
+        Expanded(child: _StatCard(icon: Icons.eco_rounded, value: '120', label: l10n.profileSteps)),
+        const SizedBox(width: 10),
+        Expanded(child: _StatCard(icon: Icons.star_rounded, value: '2', label: l10n.profileBadges)),
       ],
     );
   }
@@ -325,11 +392,15 @@ class _StatCard extends StatelessWidget {
 
 class _SettingsList extends StatelessWidget {
   final String role;
+  final AppLocalizations l10n;
   final VoidCallback onSignOut;
+  final VoidCallback onLanguage;
   final BuildContext context;
   const _SettingsList({
     required this.role,
+    required this.l10n,
     required this.onSignOut,
+    required this.onLanguage,
     required this.context,
   });
 
@@ -345,14 +416,20 @@ class _SettingsList extends StatelessWidget {
         children: [
           _SettingsTile(
             icon: Icons.settings_outlined,
-            title: 'Тохиргоо',
+            title: l10n.profileSettings,
             onTap: () => context.push('/settings'),
           ),
           const Divider(height: 1, indent: 56),
           _SettingsTile(
             icon: Icons.notifications_outlined,
-            title: 'Мэдэгдлүүд',
+            title: l10n.profileNotifications,
             onTap: () => context.push('/notifications'),
+          ),
+          const Divider(height: 1, indent: 56),
+          _SettingsTile(
+            icon: Icons.language_rounded,
+            title: l10n.profileLanguage,
+            onTap: onLanguage,
           ),
           if (role == 'participant') ...[
             const Divider(height: 1, indent: 56),
@@ -365,7 +442,7 @@ class _SettingsList extends StatelessWidget {
           const Divider(height: 1, indent: 56),
           _SettingsTile(
             icon: Icons.logout_rounded,
-            title: 'Гарах',
+            title: l10n.profileSignOut,
             titleColor: AppTheme.danger,
             iconColor: AppTheme.danger,
             onTap: onSignOut,
@@ -420,6 +497,67 @@ class _SettingsTile extends StatelessWidget {
         size: 20,
       ),
       onTap: onTap,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Language Option Widget (for bottom sheet)
+// ---------------------------------------------------------------------------
+
+class _LanguageOption extends StatelessWidget {
+  final String flag, name;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _LanguageOption({
+    required this.flag,
+    required this.name,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFF6366F1).withValues(alpha: 0.08)
+              : Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF6366F1) : Colors.grey[200]!,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Text(flag, style: const TextStyle(fontSize: 24)),
+            const SizedBox(width: 12),
+            Text(
+              name,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                color: isSelected
+                    ? const Color(0xFF6366F1)
+                    : const Color(0xFF374151),
+              ),
+            ),
+            const Spacer(),
+            if (isSelected)
+              const Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFF6366F1),
+                size: 22,
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
