@@ -53,7 +53,7 @@ class ProgrammeRepository {
     final agendaSet = await _fetchAgendaIds();
     final regSet = await _fetchRegistrationIds();
 
-    final session = EventSession.fromJson(data as Map<String, dynamic>);
+    final session = EventSession.fromJson(data);
     return session.copyWith(
       isInAgenda: agendaSet.contains(session.id),
       isRegistered: regSet.contains(session.id),

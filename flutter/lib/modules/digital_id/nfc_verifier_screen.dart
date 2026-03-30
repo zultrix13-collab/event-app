@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_nfc_kit/flutter_nfc_kit.dart';
 import 'digital_id_service.dart';
@@ -31,9 +32,12 @@ class _NfcVerifierScreenState extends State<NfcVerifierScreen> {
 
       String? qrData;
       for (final r in records) {
-        if (r.payload != null && r.payload!.contains('.')) {
-          qrData = r.payload;
-          break;
+        if (r.payload != null) {
+          final decoded = utf8.decode(r.payload!, allowMalformed: true);
+          if (decoded.contains('.')) {
+            qrData = decoded;
+            break;
+          }
         }
       }
 

@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 // mobile_scanner is not available on iOS simulator (arm64 limitation)
 // Import conditionally
-import 'package:event_app/features/map/providers/map_provider.dart';
-
 // ---------------------------------------------------------------------------
 // QrScannerScreen — QR скан (simulator-д stub харуулдаг)
 // ---------------------------------------------------------------------------
