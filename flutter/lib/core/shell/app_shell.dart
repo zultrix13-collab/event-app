@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:event_app/l10n/app_localizations.dart';
+import 'package:event_app/core/theme/app_theme.dart';
 import 'package:event_app/features/notifications/models/notification_item.dart';
 import 'package:event_app/features/notifications/providers/realtime_provider.dart';
 import 'package:event_app/features/notifications/services/realtime_notification_service.dart';
 
 // ---------------------------------------------------------------------------
-// AppShell — ShellRoute wrapper with Material 3 NavigationBar
+// AppShell — ShellRoute wrapper with floating bottom nav
 // ---------------------------------------------------------------------------
 
 class AppShell extends ConsumerStatefulWidget {
@@ -20,14 +21,6 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
-  static const _icons = [
-    (icon: Icons.home_outlined, active: Icons.home),
-    (icon: Icons.calendar_month_outlined, active: Icons.calendar_month),
-    (icon: Icons.map_outlined, active: Icons.map),
-    (icon: Icons.store_outlined, active: Icons.store),
-    (icon: Icons.person_outline, active: Icons.person),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -77,39 +70,92 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final labels = [
-      l10n.home,
-      l10n.programme,
-      l10n.map,
-      l10n.services,
-      l10n.profile,
-    ];
-
-    return Scaffold(
-      body: widget.navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: widget.navigationShell.currentIndex,
-        onDestinationSelected: _onTap,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: List.generate(
-          _icons.length,
-          (i) => NavigationDestination(
-            icon: Icon(_icons[i].icon),
-            selectedIcon: Icon(_icons[i].active),
-            label: labels[i],
-          ),
-        ),
-      ),
-    );
-  }
-
   void _onTap(int index) {
     widget.navigationShell.goBranch(
       index,
       initialLocation: index == widget.navigationShell.currentIndex,
+    );
+  }
+
+  Widget _buildFloatingNav(BuildContext context) {
+    // Keep AppLocalizations available for future use
+    AppLocalizations.of(context);
+
+    final items = [
+      (icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Нүүр'),
+      (icon: Icons.calendar_month_outlined, activeIcon: Icons.calendar_month_rounded, label: 'Хөтөлбөр'),
+      (icon: Icons.map_outlined, activeIcon: Icons.map_rounded, label: 'Газрын зураг'),
+      (icon: Icons.store_outlined, activeIcon: Icons.storefront_rounded, label: 'Үйлчилгээ'),
+      (icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Профайл'),
+    ];
+    final current = widget.navigationShell.currentIndex;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withValues(alpha: 0.12),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(items.length, (i) {
+          final isSelected = i == current;
+          return GestureDetector(
+            onTap: () => _onTap(i),
+            child: AnimatedContainer(
+              duration: AppTheme.durationNormal,
+              curve: AppTheme.curveDefault,
+              padding: EdgeInsets.symmetric(
+                horizontal: isSelected ? 14 : 12,
+                vertical: 8,
+              ),
+              decoration: isSelected
+                  ? BoxDecoration(
+                      gradient: AppTheme.gradientPrimary,
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                    )
+                  : null,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isSelected ? items[i].activeIcon : items[i].icon,
+                    color: isSelected ? Colors.white : Colors.grey[500],
+                    size: 22,
+                  ),
+                  if (isSelected) ...[
+                    const SizedBox(width: 6),
+                    Text(
+                      items[i].label,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: widget.navigationShell,
+      bottomNavigationBar: _buildFloatingNav(context),
     );
   }
 }
