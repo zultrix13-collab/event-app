@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:event_app/core/theme/app_theme.dart';
 import 'package:event_app/features/auth/providers/auth_provider.dart';
 import 'package:event_app/core/supabase/supabase_client.dart';
 
@@ -33,7 +34,6 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final authState = ref.watch(authProvider);
-    final theme = Theme.of(context);
 
     if (user == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -47,65 +47,47 @@ class ProfileScreen extends ConsumerWidget {
     final role = authState.role ?? metadata['role'] as String? ?? 'participant';
     final initials = _getInitials(fullName);
 
-    // VIP or Specialist gets Digital ID section
     final hasDigitalId = role == 'vip' || role == 'specialist';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Профайл')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Avatar + name + email
-          _AvatarSection(
-            initials: initials,
-            fullName: fullName,
-            email: email,
-            role: role,
+      backgroundColor: AppTheme.surface,
+      body: CustomScrollView(
+        slivers: [
+          // Gradient header
+          SliverToBoxAdapter(
+            child: _ProfileHeader(
+              initials: initials,
+              fullName: fullName,
+              email: email,
+              role: role,
+            ),
           ),
-          const SizedBox(height: 24),
-
-          // Digital ID card — only for VIP / Specialist
-          if (hasDigitalId) ...[
-            _DigitalIdSection(userId: user.id, fullName: fullName, role: role),
-            const SizedBox(height: 24),
-          ],
-
-          // Menu items
-          Card(
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.notifications_outlined),
-                  title: const Text('Мэдэгдлүүд'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {},
+          // Stats row
+          const SliverPadding(
+            padding: EdgeInsets.fromLTRB(16, 20, 16, 0),
+            sliver: SliverToBoxAdapter(child: _StatsRow()),
+          ),
+          // Digital ID
+          if (hasDigitalId)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+              sliver: SliverToBoxAdapter(
+                child: _DigitalIdSection(
+                  userId: user.id,
+                  fullName: fullName,
+                  role: role,
                 ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.settings_outlined),
-                  title: const Text('Тохиргоо'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push('/settings'),
-                ),
-                if (role == 'participant') ...[
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.star_outline),
-                    title: const Text('VIP эрх хүсэх'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.push('/apply-vip'),
-                  ),
-                ],
-                const Divider(height: 1),
-                ListTile(
-                  leading: Icon(Icons.logout, color: theme.colorScheme.error),
-                  title: Text(
-                    'Гарах',
-                    style: TextStyle(color: theme.colorScheme.error),
-                  ),
-                  onTap: () => _signOut(context, ref),
-                ),
-              ],
+              ),
+            ),
+          // Settings list
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+            sliver: SliverToBoxAdapter(
+              child: _SettingsList(
+                role: role,
+                onSignOut: () => _signOut(context, ref),
+                context: context,
+              ),
             ),
           ),
         ],
@@ -123,6 +105,322 @@ class ProfileScreen extends ConsumerWidget {
     if (parts.isEmpty) return '?';
     if (parts.length == 1) return parts[0][0].toUpperCase();
     return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Profile Header — gradient with initials avatar
+// ---------------------------------------------------------------------------
+
+class _ProfileHeader extends StatelessWidget {
+  final String initials, fullName, email, role;
+  const _ProfileHeader({
+    required this.initials,
+    required this.fullName,
+    required this.email,
+    required this.role,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppTheme.gradientHero,
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(AppTheme.radiusXXL),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+          child: Column(
+            children: [
+              // App bar row
+              const Row(
+                children: [
+                  Text(
+                    'Профайл',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Avatar with gradient ring
+              Container(
+                width: 88,
+                height: 88,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: AppTheme.gradientPrimary,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.white.withValues(alpha: 0.3),
+                      blurRadius: 16,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(3),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFF5B5FE8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        initials,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                fullName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                email,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.75),
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 10),
+              _RoleBadgeLight(role: role),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RoleBadgeLight extends StatelessWidget {
+  final String role;
+  const _RoleBadgeLight({required this.role});
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, icon) = switch (role) {
+      'vip' => ('VIP', Icons.star_rounded),
+      'specialist' => ('Мэргэжилтэн', Icons.verified_rounded),
+      _ => ('Оролцогч', Icons.person_rounded),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 14),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Stats Row
+// ---------------------------------------------------------------------------
+
+class _StatsRow extends StatelessWidget {
+  const _StatsRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      children: [
+        Expanded(child: _StatCard(icon: Icons.event_available_rounded, value: '3', label: 'Хичээл')),
+        SizedBox(width: 10),
+        Expanded(child: _StatCard(icon: Icons.eco_rounded, value: '120', label: 'Алхам')),
+        SizedBox(width: 10),
+        Expanded(child: _StatCard(icon: Icons.star_rounded, value: '2', label: 'Бэйж')),
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String value, label;
+  const _StatCard({required this.icon, required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLG),
+        boxShadow: const [
+          BoxShadow(color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: AppTheme.primary, size: 20),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1A1A2E),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Settings List
+// ---------------------------------------------------------------------------
+
+class _SettingsList extends StatelessWidget {
+  final String role;
+  final VoidCallback onSignOut;
+  final BuildContext context;
+  const _SettingsList({
+    required this.role,
+    required this.onSignOut,
+    required this.context,
+  });
+
+  @override
+  Widget build(BuildContext _) {
+    return Card(
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusLG),
+      ),
+      child: Column(
+        children: [
+          _SettingsTile(
+            icon: Icons.settings_outlined,
+            title: 'Тохиргоо',
+            onTap: () => context.push('/settings'),
+          ),
+          const Divider(height: 1, indent: 56),
+          _SettingsTile(
+            icon: Icons.notifications_outlined,
+            title: 'Мэдэгдлүүд',
+            onTap: () => context.push('/notifications'),
+          ),
+          if (role == 'participant') ...[
+            const Divider(height: 1, indent: 56),
+            _SettingsTile(
+              icon: Icons.star_outline_rounded,
+              title: 'VIP эрх хүсэх',
+              onTap: () => context.push('/apply-vip'),
+            ),
+          ],
+          const Divider(height: 1, indent: 56),
+          _SettingsTile(
+            icon: Icons.logout_rounded,
+            title: 'Гарах',
+            titleColor: AppTheme.danger,
+            iconColor: AppTheme.danger,
+            onTap: onSignOut,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Color? iconColor;
+  final Color? titleColor;
+  final VoidCallback? onTap;
+
+  const _SettingsTile({
+    required this.icon,
+    required this.title,
+    this.iconColor,
+    this.titleColor,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final iColor = iconColor ?? AppTheme.primary;
+    final tColor = titleColor ?? const Color(0xFF1A1A2E);
+
+    return ListTile(
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: iColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: iColor, size: 18),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+          color: tColor,
+        ),
+      ),
+      trailing: Icon(
+        Icons.chevron_right_rounded,
+        color: Colors.grey[400],
+        size: 20,
+      ),
+      onTap: onTap,
+    );
   }
 }
 
@@ -153,7 +451,7 @@ class _DigitalIdSection extends ConsumerWidget {
         ),
       ),
       error: (_, __) => _DigitalIdCard(
-        qrData: userId, // Fallback to userId
+        qrData: userId,
         fullName: fullName,
         role: role,
         expiresAt: null,
@@ -161,16 +459,19 @@ class _DigitalIdSection extends ConsumerWidget {
       ),
       data: (data) {
         if (data == null) {
-          // No digital ID issued yet
           return Card(
+            elevation: 0,
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusLG),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.badge_outlined,
-                          color: Theme.of(context).colorScheme.primary),
+                      const Icon(Icons.badge_outlined, color: AppTheme.primary),
                       const SizedBox(width: 8),
                       Text(
                         'Цахим үнэмлэх',
@@ -186,7 +487,8 @@ class _DigitalIdSection extends ConsumerWidget {
                     'Цахим үнэмлэх үүсгэгдээгүй байна.\nАдмин-д хандана уу.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -243,14 +545,18 @@ class _DigitalIdCard extends StatelessWidget {
             : '✓ Хүчинтэй';
 
     return Card(
-      elevation: 2,
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusLG),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             Row(
               children: [
-                Icon(Icons.badge_outlined, color: theme.colorScheme.primary),
+                const Icon(Icons.badge_outlined, color: AppTheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   'Цахим үнэмлэх',
@@ -259,19 +565,19 @@ class _DigitalIdCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: badgeColor.withOpacity(0.1),
+                    color: badgeColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: badgeColor.withOpacity(0.4)),
+                    border: Border.all(color: badgeColor.withValues(alpha: 0.4)),
                   ),
                   child: Text(
                     badgeText,
                     style: TextStyle(
-                        color: badgeColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600),
+                      color: badgeColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -281,17 +587,16 @@ class _DigitalIdCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.05),
+                  color: Colors.red.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.withOpacity(0.2)),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
                 ),
                 child: Text(
                   isRevoked
                       ? 'Энэ цахим үнэмлэх хүчингүй болсон.'
                       : 'Цахим үнэмлэхийн хугацаа дууссан. Шинэчлэлт авахын тулд админ-д хандана уу.',
                   textAlign: TextAlign.center,
-                  style:
-                      TextStyle(color: Colors.red[700], fontSize: 13),
+                  style: TextStyle(color: Colors.red[700], fontSize: 13),
                 ),
               )
             else
@@ -336,54 +641,7 @@ class _DigitalIdCard extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Avatar section
-// ---------------------------------------------------------------------------
-
-class _AvatarSection extends StatelessWidget {
-  const _AvatarSection({
-    required this.initials,
-    required this.fullName,
-    required this.email,
-    required this.role,
-  });
-
-  final String initials;
-  final String fullName;
-  final String email;
-  final String role;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 40,
-          backgroundColor: theme.colorScheme.primary,
-          child: Text(
-            initials,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              color: theme.colorScheme.onPrimary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          fullName,
-          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(email, style: theme.textTheme.bodyMedium),
-        const SizedBox(height: 8),
-        _RoleBadge(role: role),
-      ],
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Role badge
+// Role badge (dark version for card usage)
 // ---------------------------------------------------------------------------
 
 class _RoleBadge extends StatelessWidget {
@@ -401,14 +659,17 @@ class _RoleBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
         label,
         style: TextStyle(
-            color: color, fontWeight: FontWeight.w600, fontSize: 13),
+          color: color,
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+        ),
       ),
     );
   }
