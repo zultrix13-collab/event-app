@@ -16,15 +16,15 @@ export async function sendPushNotification(params: {
   if (params.audience !== 'all') {
     const roleMap: Record<Exclude<PushAudience, 'all'>, string> = {
       vip: 'vip',
-      general: 'attendee',
-      admin: 'admin',
+      general: 'participant',
+      admin: 'super_admin',
     };
     const { data: roleUsers } = await supabase
-      .from('user_roles')
-      .select('user_id')
+      .from('profiles')
+      .select('id')
       .eq('role', roleMap[params.audience as Exclude<PushAudience, 'all'>]);
 
-    const userIds = (roleUsers ?? []).map((r: { user_id: string }) => r.user_id);
+    const userIds = (roleUsers ?? []).map((r: { id: string }) => r.id);
     tokenQuery = tokenQuery.in('user_id', userIds);
   }
 

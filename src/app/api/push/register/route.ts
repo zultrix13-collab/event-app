@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   const { error } = await supabase
     .from('push_tokens')
     .upsert(
-      { user_id: user.id, token, platform, updated_at: new Date().toISOString() },
+      { user_id: user.id, token: token as string, platform: platform as string, updated_at: new Date().toISOString() },
       { onConflict: 'user_id,token' }
     );
 

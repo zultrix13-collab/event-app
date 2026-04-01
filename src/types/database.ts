@@ -2265,6 +2265,34 @@ export type Database = {
           { foreignKeyName: 'complaints_user_id_fkey'; columns: ['user_id']; referencedRelation: 'profiles'; referencedColumns: ['id'] }
         ];
       };
+      push_tokens: {
+        Row: {
+          id: string;
+          user_id: string;
+          token: string;
+          platform: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          token: string;
+          platform: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          token?: string;
+          platform?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'push_tokens_user_id_fkey'; columns: ['user_id']; referencedRelation: 'profiles'; referencedColumns: ['id'] }
+        ];
+      };
     };
     Views: {
       leaderboard: {
@@ -2345,6 +2373,22 @@ export type Database = {
           content_en: string | null;
           rank: number;
         }[];
+      };
+      register_for_session: {
+        Args: { p_session_id: string; p_user_id: string };
+        Returns: { success: boolean; status?: string; error?: string };
+      };
+      check_otp_rate_limit: {
+        Args: { p_email: string };
+        Returns: { allowed: boolean; attempts_left: number; blocked_until: string | null };
+      };
+      wallet_debit: {
+        Args: { p_user_id: string; p_amount: number; p_reference_id: string; p_idempotency_key: string; p_description?: string };
+        Returns: { success: boolean; transaction_id?: string; new_balance?: number; error?: string };
+      };
+      wallet_credit: {
+        Args: { p_user_id: string; p_amount: number; p_reference_id: string; p_idempotency_key: string; p_type?: string; p_description?: string };
+        Returns: { success: boolean; transaction_id?: string; new_balance?: number; error?: string };
       };
     };
     Enums: Record<string, never>;

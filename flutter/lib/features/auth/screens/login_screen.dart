@@ -72,7 +72,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         SnackBar(content: Text(error), backgroundColor: AppTheme.danger),
       );
     } else {
-      context.go('/verify', extra: email);
+      final encodedEmail = Uri.encodeComponent(email);
+      context.go('/verify?email=$encodedEmail', extra: email);
     }
   }
 
@@ -201,14 +202,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             prefixIcon: const Icon(Icons.email_outlined),
                           ),
                           validator: (v) {
-                            if (v == null || v.isEmpty) return l10n.emailRequired;
-                            if (!v.contains('@')) return l10n.emailInvalid;
+                            if (v == null || v.isEmpty) {
+                              return l10n.emailRequired;
+                            }
+                            if (!v.contains('@')) {
+                              return l10n.emailInvalid;
+                            }
                             return null;
                           },
                         ),
                         const SizedBox(height: 16),
                         _GradientButton(
-                          onPressed: (_isLoading || isOnCooldown) ? null : _sendOtp,
+                          onPressed:
+                              (_isLoading || isOnCooldown) ? null : _sendOtp,
                           child: _isLoading
                               ? const SizedBox(
                                   width: 22,
@@ -229,7 +235,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           children: [
                             const Expanded(child: Divider()),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
                               child: Text(
                                 l10n.orDivider,
                                 style: TextStyle(

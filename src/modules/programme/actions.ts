@@ -1,6 +1,16 @@
 'use server';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+
+/** HTML datetime-local → timestamptz-safe ISO (UTC) */
+function localDatetimeInputToIso(value: string): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  const d = new Date(trimmed);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
 
 // Register for session with race condition protection
 export async function registerForSession(sessionId: string) {
@@ -8,7 +18,8 @@ export async function registerForSession(sessionId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Нэвтрэх шаардлагатай' };
 
-  const { data, error } = await supabase.rpc('register_for_session', {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc('register_for_session', {
     p_session_id: sessionId,
     p_user_id: user.id,
   });
@@ -275,17 +286,72 @@ export async function createSession(params: {
   if (error) return { success: false, error: error.message };
 
   if (speaker_ids?.length) {
-    await supabase.from('session_speakers').insert(
+    const { error: spError } = await supabase.from('session_speakers').insert(
       speaker_ids.map((id, idx) => ({
         session_id: session.id,
         speaker_id: id,
         sort_order: idx,
       }))
     );
+    if (spError) {
+      await supabase.from('event_sessions').delete().eq('id', session.id);
+      return { success: false, error: spError.message };
+    }
   }
 
   revalidatePath('/admin/programme');
   return { success: true, session };
+}
+
+/** Admin new programme form — redirects with ?error= on failure */
+export async function createSessionFormAction(formData: FormData) {
+  const speakerIds = formData
+    .getAll('speaker_ids')
+    .filter((v): v is string => typeof v === 'string' && v.trim().length > 0);
+
+  const tagsRaw = formData.get('tags') as string | null;
+  const tags = tagsRaw ? tagsRaw.split(',').map((t) => t.trim()).filter(Boolean) : [];
+
+  const startsRaw = formData.get('starts_at') as string | null;
+  const endsRaw = formData.get('ends_at') as string | null;
+  const starts_at = startsRaw ? localDatetimeInputToIso(startsRaw) : null;
+  const ends_at = endsRaw ? localDatetimeInputToIso(endsRaw) : null;
+
+  if (!starts_at || !ends_at) {
+    redirect(
+      `/admin/programme/new?error=${encodeURIComponent('Эхлэх болон дуусах цагийг зөв сонгоно уу.')}`
+    );
+  }
+
+  const title = (formData.get('title') as string | null)?.trim() ?? '';
+  if (!title) {
+    redirect(`/admin/programme/new?error=${encodeURIComponent('Гарчиг оруулна уу.')}`);
+  }
+
+  const venueRaw = (formData.get('venue_id') as string | null)?.trim();
+  const venue_id = venueRaw || undefined;
+
+  const result = await createSession({
+    title,
+    title_en: ((formData.get('title_en') as string | null) || undefined)?.trim() || undefined,
+    description: ((formData.get('description') as string | null) || undefined)?.trim() || undefined,
+    description_en: ((formData.get('description_en') as string | null) || undefined)?.trim() || undefined,
+    session_type: (formData.get('session_type') as string) || 'general',
+    venue_id,
+    starts_at,
+    ends_at,
+    capacity: parseInt(String(formData.get('capacity') ?? '0'), 10) || 0,
+    zone: (formData.get('zone') as string) || 'green',
+    tags,
+    is_published: formData.get('is_published') === 'true',
+    speaker_ids: speakerIds,
+  });
+
+  if (!result.success) {
+    redirect(`/admin/programme/new?error=${encodeURIComponent(result.error ?? 'Хадгалахад алдаа гарлаа.')}`);
+  }
+
+  redirect('/admin/programme');
 }
 
 // Admin: update session
@@ -322,15 +388,17 @@ export async function updateSession(sessionId: string, params: {
   if (error) return { success: false, error: error.message };
 
   if (speaker_ids !== undefined) {
-    await supabase.from('session_speakers').delete().eq('session_id', sessionId);
+    const { error: delErr } = await supabase.from('session_speakers').delete().eq('session_id', sessionId);
+    if (delErr) return { success: false, error: delErr.message };
     if (speaker_ids.length) {
-      await supabase.from('session_speakers').insert(
+      const { error: insErr } = await supabase.from('session_speakers').insert(
         speaker_ids.map((id, idx) => ({
           session_id: sessionId,
           speaker_id: id,
           sort_order: idx,
         }))
       );
+      if (insErr) return { success: false, error: insErr.message };
     }
   }
 

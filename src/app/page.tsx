@@ -1,5 +1,18 @@
 import Link from 'next/link';
 
+/** Landing-only palette: aquatic sky blue (does not use global green accent tokens). */
+const landing = {
+  gradient: 'linear-gradient(160deg, #0c4a6e 0%, #0369a1 42%, #082f49 100%)',
+  headerBg: 'rgba(12, 74, 110, 0.88)',
+  accent: '#0ea5e9',
+  accentDeep: '#0284c7',
+  accentGlow: 'rgba(14, 165, 233, 0.42)',
+  highlight: '#7dd3fc',
+  highlightMuted: 'rgba(125, 211, 252, 0.14)',
+  highlightBorder: 'rgba(125, 211, 252, 0.28)',
+  ctaShadow: 'rgba(2, 132, 199, 0.48)',
+} as const;
+
 const features = [
   { icon: '📅', title: 'Хөтөлбөр', desc: 'Интерактив календарь, суудал захиалга, хувийн agenda' },
   { icon: '🗺️', title: 'Газрын зураг', desc: 'Дотоод болон гадаад навигаци, offline дэмжлэг' },
@@ -14,7 +27,7 @@ export default function LandingPage() {
     <main
       style={{
         minHeight: '100vh',
-        background: 'linear-gradient(160deg, var(--color-accent-dark) 0%, #166534 40%, #14532d 100%)',
+        background: landing.gradient,
         color: '#ffffff',
         fontFamily: 'var(--font-sans)',
       }}
@@ -31,7 +44,7 @@ export default function LandingPage() {
           position: 'sticky',
           top: 0,
           zIndex: 20,
-          background: 'rgba(20, 83, 45, 0.85)',
+          background: landing.headerBg,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
@@ -40,12 +53,12 @@ export default function LandingPage() {
               width: '2.5rem',
               height: '2.5rem',
               borderRadius: 'var(--radius-lg)',
-              background: 'var(--color-accent)',
+              background: landing.accent,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '1.25rem',
-              boxShadow: '0 2px 8px rgba(22, 163, 74, 0.4)',
+              boxShadow: `0 2px 8px ${landing.accentGlow}`,
             }}
           >
             🎪
@@ -90,11 +103,11 @@ export default function LandingPage() {
             fontWeight: 'var(--font-weight-bold)',
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            color: '#86efac',
-            background: 'rgba(134, 239, 172, 0.12)',
+            color: landing.highlight,
+            background: landing.highlightMuted,
             padding: '0.35rem 0.875rem',
             borderRadius: 'var(--radius-full)',
-            border: '1px solid rgba(134, 239, 172, 0.25)',
+            border: `1px solid ${landing.highlightBorder}`,
           }}
         >
           Official Digital Platform
@@ -111,7 +124,7 @@ export default function LandingPage() {
           }}
         >
           Арга хэмжааны{' '}
-          <span style={{ color: '#86efac' }}>дижитал</span>{' '}
+          <span style={{ color: landing.highlight }}>дижитал</span>{' '}
           туршлага
         </h1>
 
@@ -143,12 +156,12 @@ export default function LandingPage() {
             style={{
               padding: '1rem 2.5rem',
               borderRadius: 'var(--radius-lg)',
-              background: '#16a34a',
+              background: landing.accentDeep,
               color: '#fff',
               fontWeight: 'var(--font-weight-bold)',
               fontSize: 'var(--text-lg)',
               textDecoration: 'none',
-              boxShadow: '0 4px 20px rgba(22, 163, 74, 0.45)',
+              boxShadow: `0 4px 20px ${landing.ctaShadow}`,
               transition: 'transform 0.15s, box-shadow 0.15s',
               border: '1px solid rgba(255,255,255,0.15)',
             }}

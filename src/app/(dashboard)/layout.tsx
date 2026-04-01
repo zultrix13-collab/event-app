@@ -22,7 +22,6 @@ const APP_NAV_LINKS = [
 const DASHBOARD_NAV_LINKS = [
   { href: "/dashboard", label: "Самбар" },
   { href: "/billing", label: "Billing" },
-  { href: "/dashboard/pages", label: "Хуудсууд" },
 ] as const;
 
 export default async function DashboardLayout({ children }: DashboardLayoutProps) {

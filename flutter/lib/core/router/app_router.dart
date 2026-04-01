@@ -40,7 +40,13 @@ class _AuthNotifierListenable extends ChangeNotifier {
 }
 
 // Auth routes that live OUTSIDE the shell
-const _authRoutes = {'/login', '/verify', '/setup-org', '/pending-approval', '/apply-vip'};
+const _authRoutes = {
+  '/login',
+  '/verify',
+  '/setup-org',
+  '/pending-approval',
+  '/apply-vip'
+};
 
 // ---------------------------------------------------------------------------
 // Router Provider
@@ -71,8 +77,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      // Нэвтэрсэн бол auth route-аас гарах (verify route-оос гарахгүй!)
-      if (isLoggedIn && currentPath == '/login') {
+      // Нэвтэрсэн хэрэглэгч auth дэлгэц дээр байвал үндсэн рүү оруулах
+      if (isLoggedIn && isAuthRoute && currentPath != '/pending-approval') {
         return '/home';
       }
 
@@ -89,7 +95,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/verify',
         builder: (_, state) {
-          final email = state.extra as String? ?? '';
+          final emailFromQuery = state.uri.queryParameters['email'];
+          final emailFromExtra = state.extra as String?;
+          final email = emailFromQuery ?? emailFromExtra ?? '';
           return VerifyScreen(email: email);
         },
       ),

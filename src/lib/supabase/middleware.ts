@@ -83,6 +83,14 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // Logged-in users should not stay on the public marketing landing (fixes "OAuth ok but I see logged-out home")
+  if (user && pathname === "/") {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/dashboard";
+    redirectUrl.search = "";
+    return NextResponse.redirect(redirectUrl);
+  }
+
   // Not authenticated → redirect to login
   if (!user && isProtectedPath(pathname)) {
     const redirectUrl = request.nextUrl.clone();

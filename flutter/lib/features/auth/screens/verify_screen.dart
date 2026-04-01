@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:event_app/core/theme/app_theme.dart';
 import 'package:event_app/features/auth/providers/auth_provider.dart';
 import 'package:event_app/l10n/app_localizations.dart';
+
+const _otpLength = 8;
 
 class VerifyScreen extends ConsumerStatefulWidget {
   const VerifyScreen({super.key, required this.email});
@@ -18,10 +21,13 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
   final _focusNode = FocusNode();
   bool _isLoading = false;
 
+  bool get _hasEmail => widget.email.trim().isNotEmpty;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _focusNode.requestFocus());
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _focusNode.requestFocus());
   }
 
   @override
@@ -32,6 +38,7 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
   }
 
   Future<void> _verify() async {
+    if (!_hasEmail) return;
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     await ref.read(authProvider.notifier).verifyOtp(
@@ -49,6 +56,7 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
   }
 
   Future<void> _resendOtp() async {
+    if (!_hasEmail) return;
     final cooldown = ref.read(authProvider).cooldownSeconds;
     if (cooldown > 0) return;
     setState(() => _isLoading = true);
@@ -83,7 +91,8 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          Container(decoration: const BoxDecoration(gradient: AppTheme.gradientHero)),
+          Container(
+              decoration: const BoxDecoration(gradient: AppTheme.gradientHero)),
           SafeArea(
             bottom: false,
             child: Padding(
@@ -115,7 +124,7 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    widget.email,
+                    _hasEmail ? widget.email : 'Имэйл мэдээлэл олдсонгүй',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 13,
@@ -167,7 +176,9 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        l10n.verifySubtitle,
+                        _hasEmail
+                            ? l10n.verifySubtitle
+                            : 'Нэвтрэх урсгал тасарсан байна. Буцаж имэйлээ дахин оруулна уу.',
                         style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 32),
@@ -187,14 +198,20 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
                                   controller: _otpController,
                                   focusNode: _focusNode,
                                   keyboardType: TextInputType.number,
-                                  maxLength: 8,
-                                  decoration: const InputDecoration(counterText: ''),
+                                  maxLength: _otpLength,
+                                  decoration:
+                                      const InputDecoration(counterText: ''),
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    LengthLimitingTextInputFormatter(
+                                        _otpLength),
+                                  ],
                                   onChanged: (v) {
                                     setState(() {});
-                                    if (v.length == 8) _verify();
+                                    if (v.length == _otpLength) _verify();
                                   },
                                   validator: (v) {
-                                    if (v == null || v.length < 6) {
+                                    if (v == null || v.length < _otpLength) {
                                       return 'OTP кодоо бүрэн оруулна уу';
                                     }
                                     return null;
@@ -207,7 +224,11 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
                       ),
                       const SizedBox(height: 32),
                       _GradientButton(
-                        onPressed: (_isLoading || otpValue.length < 6) ? null : _verify,
+                        onPressed: (!_hasEmail ||
+                                _isLoading ||
+                                otpValue.length < _otpLength)
+                            ? null
+                            : _verify,
                         child: _isLoading
                             ? const SizedBox(
                                 width: 22,
@@ -221,7 +242,9 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
                       ),
                       const SizedBox(height: 16),
                       TextButton(
-                        onPressed: (_isLoading || isOnCooldown) ? null : _resendOtp,
+                        onPressed: (!_hasEmail || _isLoading || isOnCooldown)
+                            ? null
+                            : _resendOtp,
                         child: Text(
                           isOnCooldown
                               ? l10n.resendOtpCooldown(cooldown)
@@ -229,7 +252,8 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
                         ),
                       ),
                       TextButton(
-                        onPressed: _isLoading ? null : () => context.go('/login'),
+                        onPressed:
+                            _isLoading ? null : () => context.go('/login'),
                         child: Text(
                           l10n.verifyBack,
                           style: TextStyle(color: Colors.grey[500]),
@@ -256,7 +280,7 @@ class _OtpBoxes extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(8, (i) {
+      children: List.generate(_otpLength, (i) {
         final filled = i < value.length;
         final active = i == value.length && !isLoading;
         return AnimatedContainer(

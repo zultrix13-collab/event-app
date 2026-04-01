@@ -7,14 +7,14 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data: role } = await supabase
-    .from('user_roles')
+  const { data: profile } = await supabase
+    .from('profiles')
     .select('role')
-    .eq('user_id', user.id)
-    .in('role', ['admin', 'super_admin'])
+    .eq('id', user.id)
+    .in('role', ['super_admin', 'specialist'])
     .single();
 
-  if (!role) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const body = await req.json() as {
     title?: string;

@@ -2,12 +2,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:event_app/core/config/app_config.dart';
 import 'package:event_app/core/notifications/local_notification_service.dart';
 import 'package:event_app/core/notifications/firebase_messaging_service.dart';
 import 'package:event_app/core/router/app_router.dart';
+import 'package:event_app/core/services/map_cache_service.dart';
 import 'package:event_app/core/supabase/supabase_client.dart';
 import 'package:event_app/core/theme/app_theme.dart';
 import 'package:event_app/core/providers/locale_provider.dart';
@@ -30,21 +30,17 @@ Future<void> main() async {
   }
 
   try {
-    debugPrint('⏳ Initializing FMTCObjectBoxBackend...');
-    // Initialize FMTC (offline map tile caching) with ObjectBox backend
-    await FMTCObjectBoxBackend().initialise();
-    debugPrint('✅ FMTC Backend Initialized');
-
-    // Create the default map store if it doesn't exist yet
-    final store = FMTCStore('eventMapStore');
-    if (!await store.manage.ready) {
-      await store.manage.create();
-    }
-    debugPrint('✅ FMTC Store Ready');
+    debugPrint('⏳ Initializing map cache...');
+    await MapCacheService.initialize();
 
     // Initialize local notifications (used for foreground FCM messages)
-    await LocalNotificationService.initialize();
-    debugPrint('✅ Notification Service Initialized');
+    try {
+      await LocalNotificationService.initialize();
+      debugPrint('✅ Notification Service Initialized');
+    } catch (notificationError, notificationStack) {
+      debugPrint('⚠️ Notification initialization failed: $notificationError');
+      debugPrint(notificationStack.toString());
+    }
 
     debugPrint('⏳ Initializing Firebase...');
     try {
@@ -71,11 +67,16 @@ Future<void> main() async {
     }
 
     debugPrint('⏳ Initializing Supabase...');
-    await SupabaseConfig.init(
-      supabaseUrl: AppConfig.supabaseUrl,
-      supabaseAnonKey: AppConfig.supabaseAnonKey,
-    );
-    debugPrint('✅ Supabase Initialized');
+    try {
+      await SupabaseConfig.init(
+        supabaseUrl: AppConfig.supabaseUrl,
+        supabaseAnonKey: AppConfig.supabaseAnonKey,
+      );
+      debugPrint('✅ Supabase Initialized');
+    } catch (supabaseError, supabaseStack) {
+      debugPrint('⚠️ Supabase initialization failed: $supabaseError');
+      debugPrint(supabaseStack.toString());
+    }
 
     runApp(
       const ProviderScope(

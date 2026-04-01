@@ -1,38 +1,17 @@
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
-import { createSession } from '@/modules/programme/actions';
-import { redirect } from 'next/navigation';
+import { createSessionFormAction } from '@/modules/programme/actions';
 
-export default async function NewSessionPage() {
+export default async function NewSessionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error: errorFromQuery } = await searchParams;
   const supabase = await createClient();
 
   const { data: venues } = await supabase.from('venues').select('id, name').eq('is_active', true).order('name');
   const { data: speakers } = await supabase.from('speakers').select('id, full_name').eq('is_active', true).order('full_name');
-
-  async function handleCreate(formData: FormData) {
-    'use server';
-    const speakerIds = formData.getAll('speaker_ids') as string[];
-    const tagsRaw = formData.get('tags') as string;
-    const tags = tagsRaw ? tagsRaw.split(',').map((t) => t.trim()).filter(Boolean) : [];
-
-    const result = await createSession({
-      title: formData.get('title') as string,
-      title_en: (formData.get('title_en') as string) || undefined,
-      description: (formData.get('description') as string) || undefined,
-      description_en: (formData.get('description_en') as string) || undefined,
-      session_type: formData.get('session_type') as string,
-      venue_id: (formData.get('venue_id') as string) || undefined,
-      starts_at: formData.get('starts_at') as string,
-      ends_at: formData.get('ends_at') as string,
-      capacity: parseInt(formData.get('capacity') as string) || 0,
-      zone: formData.get('zone') as string,
-      tags,
-      is_published: formData.get('is_published') === 'true',
-      speaker_ids: speakerIds,
-    });
-
-    if (result.success) redirect('/admin/programme');
-  }
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
@@ -43,7 +22,16 @@ export default async function NewSessionPage() {
         <h1 className="text-2xl font-bold mt-2">Шинэ арга хэмжаа нэмэх</h1>
       </div>
 
-      <form action={handleCreate} className="space-y-6">
+      {errorFromQuery && (
+        <div
+          className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          role="alert"
+        >
+          {errorFromQuery}
+        </div>
+      )}
+
+      <form action={createSessionFormAction} className="space-y-6">
         <div className="bg-white rounded-xl border shadow-sm p-6 space-y-4">
           <h2 className="font-semibold text-gray-900">Үндсэн мэдээлэл</h2>
 

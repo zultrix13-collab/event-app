@@ -21,6 +21,14 @@ export default async function DashboardPage() {
   const subscription = await getCurrentOrganizationSubscription(user.id);
   const supabase = await createClient();
 
+  const { data: operatorProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  const canAccessAdminProgramme =
+    operatorProfile?.role === "super_admin" || operatorProfile?.role === "specialist";
+
   // Fetch stats
   const today = new Date().toISOString().split("T")[0];
 
@@ -126,15 +134,32 @@ export default async function DashboardPage() {
           Хурдан үйлдлүүд
         </h2>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
-          <Link href="/dashboard/pages" className="ui-button ui-button--primary">
-            📅 Хөтөлбөр нэмэх
-          </Link>
-          <Link href="/admin/notifications" className="ui-button ui-button--secondary">
-            🔔 Мэдэгдэл явуулах
-          </Link>
-          <Link href="/admin/stats" className="ui-button ui-button--secondary">
-            📊 Тайлан харах
-          </Link>
+          {canAccessAdminProgramme ? (
+            <>
+              <Link href="/admin/programme/new" className="ui-button ui-button--primary">
+                📅 Хөтөлбөр нэмэх
+              </Link>
+              <Link href="/admin/notifications" className="ui-button ui-button--secondary">
+                🔔 Мэдэгдэл явуулах
+              </Link>
+              <Link href="/admin/stats" className="ui-button ui-button--secondary">
+                📊 Тайлан харах
+              </Link>
+            </>
+          ) : (
+            <p
+              style={{
+                margin: 0,
+                fontSize: "var(--text-sm)",
+                color: "var(--color-text-muted)",
+                maxWidth: "32rem",
+              }}
+            >
+              Хөтөлбөр нэмэх, мэдэгдэл илгээх зэрэг нь <strong>системийн админ</strong> эсвэл{" "}
+              <strong>мэргэжилтэн</strong> эрхтэй данснаас <code>/admin</code> хэсгээр хийгдэнэ.
+              Таны одоогийн эрхээр зөвхөн энэхүү самбарын статистик харагдана.
+            </p>
+          )}
           <Link href="/billing" className="ui-button ui-button--ghost">
             💳 Subscription
           </Link>
@@ -145,9 +170,11 @@ export default async function DashboardPage() {
       <div className="ui-card ui-card--padded">
         <div className="ui-section-head" style={{ marginBottom: "var(--space-4)" }}>
           <h2 className="ui-section-title">Сүүлийн бүртгэлүүд</h2>
-          <Link href="/admin/stats" className="ui-link-subtle">
-            Бүгдийг харах →
-          </Link>
+          {canAccessAdminProgramme ? (
+            <Link href="/admin/stats" className="ui-link-subtle">
+              Бүгдийг харах →
+            </Link>
+          ) : null}
         </div>
 
         {!recentActivity || recentActivity.length === 0 ? (

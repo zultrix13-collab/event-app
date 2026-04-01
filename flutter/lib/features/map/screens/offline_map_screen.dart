@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:event_app/core/services/map_cache_service.dart';
 
 // ---------------------------------------------------------------------------
 // OfflineMapScreen — Download and manage cached map tiles for offline use
@@ -36,6 +38,24 @@ class _OfflineMapScreenState extends State<OfflineMapScreen> {
   int _totalTiles = 0;
   StreamSubscription<DownloadProgress>? _downloadSub;
 
+  bool get _offlineCacheReady => MapCacheService.supportsOfflineDownloads;
+
+  String get _unavailableMessage {
+    final error = MapCacheService.startupError;
+    if (error != null) {
+      return 'Offline газрын зургийн кэш түр унтарсан: $error';
+    }
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) {
+      return 'Offline таталт iPhone/iPad simulator эсвэл бодит төхөөрөмж дээр ажиллана.';
+    }
+    if (!kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.windows ||
+            defaultTargetPlatform == TargetPlatform.linux)) {
+      return 'Offline таталт mobile төхөөрөмж дээр дэмжигдэнэ.';
+    }
+    return 'Offline газрын зургийн кэш одоогоор боломжгүй байна.';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -53,6 +73,15 @@ class _OfflineMapScreenState extends State<OfflineMapScreen> {
   // ---------------------------------------------------------------------------
 
   Future<void> _loadStats() async {
+    if (!_offlineCacheReady) {
+      setState(() {
+        _cachedTileCount = 0;
+        _cacheSizeMB = 0.0;
+        _loadingStats = false;
+      });
+      return;
+    }
+
     setState(() => _loadingStats = true);
     try {
       final store = FMTCStore(_storeName);
@@ -85,7 +114,7 @@ class _OfflineMapScreenState extends State<OfflineMapScreen> {
   }
 
   Future<void> _startDownload() async {
-    if (_isDownloading) return;
+    if (_isDownloading || !_offlineCacheReady) return;
 
     // Ensure store exists
     try {
@@ -146,6 +175,7 @@ class _OfflineMapScreenState extends State<OfflineMapScreen> {
   }
 
   Future<void> _cancelDownload() async {
+    if (!_offlineCacheReady) return;
     await _downloadSub?.cancel();
     _downloadSub = null;
     await FMTCStore(_storeName).download.cancel();
@@ -153,6 +183,8 @@ class _OfflineMapScreenState extends State<OfflineMapScreen> {
   }
 
   Future<void> _clearCache() async {
+    if (!_offlineCacheReady) return;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -230,6 +262,35 @@ class _OfflineMapScreenState extends State<OfflineMapScreen> {
 
             const SizedBox(height: 24),
 
+            if (!_offlineCacheReady) ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: theme.colorScheme.onSecondaryContainer,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _unavailableMessage,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSecondaryContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+
             // Cache stats card
             Card(
               child: Padding(
@@ -269,7 +330,9 @@ class _OfflineMapScreenState extends State<OfflineMapScreen> {
 
             // Download area description
             Text(
-              'Уулаанбаатар хот (zoom 12–16)',
+              _offlineCacheReady
+                  ? 'Уулаанбаатар хот (zoom 12–16)'
+                  : 'Offline таталт энэ төхөөрөмж дээр идэвхгүй байна',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.outline,
               ),
@@ -302,7 +365,7 @@ class _OfflineMapScreenState extends State<OfflineMapScreen> {
               FilledButton.icon(
                 icon: const Icon(Icons.download),
                 label: const Text('Энэ хэсгийг offline татах'),
-                onPressed: _startDownload,
+                onPressed: _offlineCacheReady ? _startDownload : null,
               ),
             ],
 
@@ -315,7 +378,10 @@ class _OfflineMapScreenState extends State<OfflineMapScreen> {
                 'Кэш цэвэрлэх',
                 style: TextStyle(color: Colors.red),
               ),
-              onPressed: (_loadingStats || _isDownloading) ? null : _clearCache,
+              onPressed:
+                  (_loadingStats || _isDownloading || !_offlineCacheReady)
+                      ? null
+                      : _clearCache,
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Colors.red),
               ),

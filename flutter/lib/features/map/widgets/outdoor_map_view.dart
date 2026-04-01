@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:event_app/core/services/map_cache_service.dart';
 import 'package:event_app/features/map/models/map_poi.dart';
 import 'package:event_app/features/map/providers/map_provider.dart';
 
@@ -113,8 +113,7 @@ class _CategoryFilterBar extends StatelessWidget {
                       size: 16, color: _categoryColor(cat)),
                   label: Text(_categoryLabels[cat] ?? cat.name),
                   selected: activeFilter == cat,
-                  onSelected: (_) =>
-                      onFilter(activeFilter == cat ? null : cat),
+                  onSelected: (_) => onFilter(activeFilter == cat ? null : cat),
                 ),
               )),
         ],
@@ -130,6 +129,8 @@ class _MapWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tileProvider = MapCacheService.tryCreateTileProvider();
+
     return FlutterMap(
       options: const MapOptions(
         initialCenter: _ubCenter,
@@ -139,7 +140,7 @@ class _MapWidget extends StatelessWidget {
         TileLayer(
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: 'com.example.event_app',
-          tileProvider: FMTCStore('eventMapStore').getTileProvider(),
+          tileProvider: tileProvider,
         ),
         MarkerLayer(
           markers: pois.map((poi) {

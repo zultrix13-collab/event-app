@@ -10,6 +10,10 @@ import 'package:event_app/core/config/env.dart';
 class AppConfig {
   AppConfig._();
 
+  static const authCallbackScheme = 'mn.devgrafx.eventapp';
+  static const authCallbackHost = 'login-callback';
+  static const authCallbackUrl = '$authCallbackScheme://$authCallbackHost';
+
   static const supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
     defaultValue: Env.supabaseUrl,

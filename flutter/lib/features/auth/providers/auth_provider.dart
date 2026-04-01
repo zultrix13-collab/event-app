@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:event_app/core/config/app_config.dart';
 import 'package:event_app/core/notifications/firebase_messaging_service.dart';
 import 'package:event_app/core/supabase/supabase_client.dart';
 
@@ -78,9 +79,35 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   final _client = SupabaseConfig.client;
   Timer? _cooldownTimer;
+  StreamSubscription<dynamic>? _authStateSubscription;
+
+  String _friendlyAuthError(Object error) {
+    if (error is AuthApiException) {
+      final code = error.code?.toLowerCase();
+      if (code == 'over_email_send_rate_limit' || error.statusCode == '429') {
+        return 'OTP имэйл илгээх дээд хязгаарт хүрсэн байна. Түр хүлээгээд дараа дахин оролдоно уу.';
+      }
+      if (code == 'otp_expired') {
+        return 'OTP кодын хугацаа дууссан байна. Шинэ код авч дахин оролдоно уу.';
+      }
+      if (code == 'invalid_grant' || code == 'otp_disabled') {
+        return 'OTP баталгаажуулалт одоогоор боломжгүй байна. Дахин оролдоно уу.';
+      }
+      return error.message;
+    }
+
+    final message = error.toString();
+    if (message.contains('over_email_send_rate_limit') ||
+        message.contains('email rate limit exceeded')) {
+      return 'OTP имэйл илгээх дээд хязгаарт хүрсэн байна. Түр хүлээгээд дараа дахин оролдоно уу.';
+    }
+
+    return message;
+  }
 
   @override
   void dispose() {
+    _authStateSubscription?.cancel();
     _cooldownTimer?.cancel();
     super.dispose();
   }
@@ -94,7 +121,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = const AuthState(status: AuthStatus.unauthenticated);
     }
 
-    _client.auth.onAuthStateChange.listen((data) {
+    _authStateSubscription = _client.auth.onAuthStateChange.listen((data) {
       final session = data.session;
       if (session != null) {
         state = state.copyWith(
@@ -119,15 +146,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       if (data != null) {
         state = state.copyWith(
-          isApproved: data['is_approved'] as bool? ?? false,
+          isApproved: data['is_approved'] as bool?,
           role: data['role'] as String? ?? 'participant',
         );
       } else {
-        state = state.copyWith(isApproved: false, role: 'participant');
+        state = state.copyWith(isApproved: null, role: null);
       }
     } catch (e) {
-      debugPrint('[AuthNotifier] profile fetch failed (table missing / RLS): $e');
-      state = state.copyWith(isApproved: false, role: 'participant');
+      debugPrint(
+          '[AuthNotifier] profile fetch failed (table missing / RLS): $e');
+      state = state.copyWith(isApproved: null, role: null);
     }
 
     // --- NEW: Sync FCM Token ---
@@ -136,8 +164,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (token != null) {
         await _client
             .from('profiles')
-            .update({'fcm_token': token})
-            .eq('id', userId);
+            .update({'fcm_token': token}).eq('id', userId);
         debugPrint('✅ FCM Token synced for user: $userId');
       }
     } catch (e) {
@@ -227,10 +254,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
         otpError: null,
       );
     } catch (e) {
+      final friendlyError = _friendlyAuthError(e);
+      if (friendlyError.contains('дээд хязгаарт хүрсэн')) {
+        _startCooldown(300);
+      }
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
-        error: e.toString(),
-        otpError: e.toString(),
+        error: friendlyError,
+        otpError: friendlyError,
       );
     }
   }
@@ -258,21 +289,32 @@ class AuthNotifier extends StateNotifier<AuthState> {
         );
       }
     } catch (e) {
+      final friendlyError = _friendlyAuthError(e);
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
-        error: e.toString(),
+        error: friendlyError,
       );
     }
   }
 
   /// Google Sign-In — Supabase native OAuth (Firebase/google_sign_in шаардахгүй)
   Future<void> signInWithGoogle() async {
-    state = state.copyWith(status: AuthStatus.loading);
+    state = state.copyWith(
+      status: AuthStatus.loading,
+      error: null,
+    );
     try {
-      await _client.auth.signInWithOAuth(
+      final didLaunch = await _client.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: 'mn.devgrafx.eventapp://login-callback',
+        redirectTo: AppConfig.authCallbackUrl,
       );
+      if (!didLaunch) {
+        state = state.copyWith(
+          status: AuthStatus.unauthenticated,
+          error:
+              'Google нэвтрэх цонх нээгдсэнгүй. Redirect URL болон браузер тохиргоогоо шалгана уу.',
+        );
+      }
       // Auth state change нь onAuthStateChange listener-ээр автоматаар handle хийгдэнэ
     } catch (e) {
       debugPrint('[AuthNotifier] Google Sign-In error: $e');
